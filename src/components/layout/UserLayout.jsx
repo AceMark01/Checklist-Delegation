@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
+import { Languages } from "lucide-react"
+import { useTranslation } from "../../contexts/TranslationContext"
 
 const UserLayout = ({ children }) => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t, language, toggleLanguage } = useTranslation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [username, setUsername] = useState("")
   const [isAdmin, setIsAdmin] = useState(false)
@@ -64,14 +67,25 @@ const UserLayout = ({ children }) => {
     <div className="flex h-screen overflow-hidden bg-gradient-to-br from-green-50 to-teal-50 dark:from-gray-900 dark:to-teal-950">
       {/* Sidebar for desktop */}
       <aside className="hidden w-64 flex-shrink-0 border-r border-green-200 dark:border-teal-800 bg-white dark:bg-gray-950 md:flex md:flex-col">
-        <div className="flex h-14 items-center border-b border-green-200 dark:border-teal-800 px-4 bg-gradient-to-r from-green-100 to-teal-100 dark:from-green-900 dark:to-teal-900">
+        <div className="flex h-14 items-center justify-between border-b border-green-200 dark:border-teal-800 px-4 bg-gradient-to-r from-green-100 to-teal-100 dark:from-green-900 dark:to-teal-900">
           <Link
             to={isAdmin ? "/admin/dashboard" : "/user/dashboard"}
             className="flex items-center gap-2 font-semibold text-green-700 dark:text-green-300"
           >
             <i className="fas fa-clipboard-list h-5 w-5 text-green-600 dark:text-green-400"></i>
-            <span>Checklist & Delegation</span>
+            <span>{t('login.title')}</span>
           </Link>
+          <button
+            onClick={toggleLanguage}
+            className="text-green-700 hover:text-green-900 dark:text-green-300 dark:hover:text-green-100 p-1 rounded-full hover:bg-green-100 dark:hover:bg-green-800 relative group"
+            title={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
+          >
+            <Languages className="h-4 w-4" />
+            <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-purple-600 text-white rounded-full w-3 h-3 flex items-center justify-center">
+              {language === 'en' ? 'EN' : 'HI'}
+            </span>
+            <span className="sr-only">{t('common.selectLanguage')}</span>
+          </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-2">
           <ul className="space-y-1">
@@ -130,15 +144,26 @@ const UserLayout = ({ children }) => {
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-950 transform ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"} transition-transform duration-200 ease-in-out md:hidden`}
       >
-        <div className="flex h-14 items-center border-b border-green-200 dark:border-teal-800 px-4 bg-gradient-to-r from-green-100 to-teal-100 dark:from-green-900 dark:to-teal-900">
+        <div className="flex h-14 items-center justify-between border-b border-green-200 dark:border-teal-800 px-4 bg-gradient-to-r from-green-100 to-teal-100 dark:from-green-900 dark:to-teal-900">
           <Link
             to={isAdmin ? "/admin/dashboard" : "/user/dashboard"}
             className="flex items-center gap-2 font-semibold text-green-700 dark:text-green-300"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <i className="fas fa-clipboard-list h-5 w-5 text-green-600 dark:text-green-400"></i>
-            <span>Checklist & Delegation</span>
+            <span>{t('login.title')}</span>
           </Link>
+          <button
+            onClick={toggleLanguage}
+            className="text-green-700 hover:text-green-900 dark:text-green-300 dark:hover:text-green-100 p-1 rounded-full hover:bg-green-100 dark:hover:bg-green-800 relative group"
+            title={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
+          >
+            <Languages className="h-4 w-4" />
+            <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-purple-600 text-white rounded-full w-3 h-3 flex items-center justify-center">
+              {language === 'en' ? 'EN' : 'HI'}
+            </span>
+            <span className="sr-only">{t('common.selectLanguage')}</span>
+          </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-2 bg-white dark:bg-gray-950">
           <ul className="space-y-1">

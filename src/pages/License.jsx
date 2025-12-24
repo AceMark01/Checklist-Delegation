@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { FileText, ScrollText, Users, User, KeyRound } from 'lucide-react'
 import AdminLayout from "../components/layout/AdminLayout";
+import { useTranslation } from "../contexts/TranslationContext";
 
 const License = () => {
+    const { t } = useTranslation();
     const [userRole, setUserRole] = useState("")
     const [username, setUsername] = useState("")
 
@@ -26,9 +28,9 @@ const License = () => {
                                     <KeyRound className="h-6 w-6 text-white" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-bold text-gray-800">License Agreement</h1>
+                                    <h1 className="text-3xl font-bold text-gray-800">{t('license.title')}</h1>
                                     <p className="text-gray-600 mt-1">
-                                        Software license terms and conditions
+                                        {t('license.subtitle')}
                                     </p>
                                 </div>
                             </div>
@@ -42,20 +44,18 @@ const License = () => {
                                 {/* Copyright Notice */}
                                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg p-6 max-w-2xl w-full">
                                     <div className="text-xl font-bold text-gray-800 mb-3 text-center">
-                                        © BOTIVATE SERVICES LLP
+                                        {t('license.copyright')}
                                     </div>
                                     <p className="text-gray-700 text-center leading-relaxed">
-                                        This software is developed exclusively by Botivate Services LLP for use by its clients. 
-                                        Unauthorized use, distribution, or copying of this software is strictly prohibited and 
-                                        may result in legal action.
+                                        {t('license.terms')}
                                     </p>
                                 </div>
 
                                 {/* Contact Information */}
                                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-5 max-w-2xl w-full">
-                                    <h4 className="font-semibold text-blue-800 mb-3 text-center">Contact Information</h4>
+                                    <h4 className="font-semibold text-blue-800 mb-3 text-center">{t('license.contactTitle')}</h4>
                                     <p className="text-blue-700 mb-3 text-center">
-                                        For license inquiries or technical support, please contact our support team:
+                                        {t('license.contactSubtitle')}
                                     </p>
                                     <div className="text-center space-y-1">
                                         <div>

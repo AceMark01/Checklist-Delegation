@@ -12,6 +12,7 @@ import {
   Camera,
 } from "lucide-react";
 import AdminLayout from "../../components/layout/AdminLayout";
+import { useTranslation } from "../../contexts/TranslationContext";
 
 // Configuration object - Move all configurations here
 const CONFIG = {
@@ -27,15 +28,15 @@ const CONFIG = {
 
   // Page configuration
   PAGE_CONFIG: {
-    title: "Checklist Tasks",
-    historyTitle: "Checklist Task History",
-    description: "Showing today, tomorrow's tasks and past due tasks",
-    historyDescription:
-      "Read-only view of completed tasks with submission history",
+    title: "assignTask.checklistTasks",
+    historyTitle: "assignTask.checklistHistory",
+    description: "assignTask.checklistDescription",
+    historyDescription: "assignTask.checklistHistoryDescription",
   },
 };
 
 function AccountDataPage() {
+  const { t } = useTranslation();
   const [accountData, setAccountData] = useState([]);
   const [selectedItems, setSelectedItems] = useState(new Set()); // Changed to Set for better performance
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,6 +140,59 @@ function AccountDataPage() {
     return dateA.getTime() - dateB.getTime();
   };
 
+  const translateValue = (value, columnType = 'auto') => {
+    if (!value) return "—";
+    const lowerValue = value.toString().toLowerCase().trim();
+
+    // Frequency mapping
+    const freqKeys = {
+      'daily': 'assignTask.daily',
+      'weekly': 'assignTask.weekly',
+      'fortnightly': 'assignTask.fortnightly',
+      'monthly': 'assignTask.monthly',
+      'quarterly': 'assignTask.quarterly',
+      'half-yearly': 'assignTask.halfYearly',
+      'yearly': 'assignTask.yearly',
+      'one-time': 'assignTask.oneTime'
+    };
+
+    // Status mapping
+    const statusKeys = {
+      'completed': 'assignTask.completed',
+      'pending': 'assignTask.pending',
+      'not required': 'common.notRequired',
+      'in progress': 'assignTask.inProgress',
+      'yes': 'common.yes',
+      'no': 'common.no',
+      'done': 'assignTask.completed'
+    };
+
+    // Enable Reminders / Require Attachment mapping (Yes/No)
+    const yesNoKeys = {
+      'yes': 'common.yes',
+      'no': 'common.no',
+      'enabled': 'common.yes',
+      'disabled': 'common.no',
+      'true': 'common.yes',
+      'false': 'common.no'
+    };
+
+    // Auto-detect or use specified column type
+    if (columnType === 'frequency' || columnType === 'auto') {
+      if (freqKeys[lowerValue]) return t(freqKeys[lowerValue]);
+    }
+    
+    if (columnType === 'status' || columnType === 'auto') {
+      if (statusKeys[lowerValue]) return t(statusKeys[lowerValue]);
+    }
+    
+    if (columnType === 'yesno' || columnType === 'auto') {
+      if (yesNoKeys[lowerValue]) return t(yesNoKeys[lowerValue]);
+    }
+
+    return value;
+  };
+
   const resetFilters = () => {
     setSearchTerm("");
     setSelectedMembers([]);
@@ -150,12 +204,12 @@ function AccountDataPage() {
   const filteredAccountData = useMemo(() => {
     const filtered = searchTerm
       ? accountData.filter((account) =>
-          Object.values(account).some(
-            (value) =>
-              value &&
-              value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-          )
+        Object.values(account).some(
+          (value) =>
+            value &&
+            value.toString().toLowerCase().includes(searchTerm.toLowerCase())
         )
+      )
       : accountData;
 
     return filtered.sort(sortDateWise);
@@ -174,13 +228,13 @@ function AccountDataPage() {
       .filter((item) => {
         const matchesSearch = searchTerm
           ? Object.values(item).some(
-              (value) =>
-                value &&
-                value
-                  .toString()
-                  .toLowerCase()
-                  .includes(searchTerm.toLowerCase())
-            )
+            (value) =>
+              value &&
+              value
+                .toString()
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())
+          )
           : true;
 
         const matchesMember =
@@ -224,14 +278,14 @@ function AccountDataPage() {
     const memberStats =
       selectedMembers.length > 0
         ? selectedMembers.reduce((stats, member) => {
-            const memberTasks = historyData.filter(
-              (task) => task["col4"] === member
-            ).length;
-            return {
-              ...stats,
-              [member]: memberTasks,
-            };
-          }, {})
+          const memberTasks = historyData.filter(
+            (task) => task["col4"] === member
+          ).length;
+          return {
+            ...stats,
+            [member]: memberTasks,
+          };
+        }, {})
         : {};
     const filteredTotal = filteredHistoryData.length;
 
@@ -332,7 +386,7 @@ function AccountDataPage() {
           return;
         }
 
-        const assignedTo = rowValues[4] || "Unassigned";
+        const assignedTo = rowValues[4] || t('delegation.unassigned');
         membersSet.add(assignedTo);
 
         const isUserMatch =
@@ -358,8 +412,8 @@ function AccountDataPage() {
         const stableId = taskId
           ? `task_${taskId}_${googleSheetsRowIndex}`
           : `row_${googleSheetsRowIndex}_${Math.random()
-              .toString(36)
-              .substring(2, 15)}`;
+            .toString(36)
+            .substring(2, 15)}`;
 
         const rowData = {
           _id: stableId, // More stable ID
@@ -461,7 +515,7 @@ function AccountDataPage() {
     const selectedHistoryArray = Array.from(selectedHistoryItems);
 
     if (selectedHistoryArray.length === 0) {
-      alert("Please select at least one item to mark as DONE");
+      alert(t('delegation.selectAtLeastOneDone'));
       return;
     }
 
@@ -504,14 +558,14 @@ function AccountDataPage() {
 
         setSelectedHistoryItems(new Set());
         setSuccessMessage(
-          `Successfully marked ${selectedHistoryArray.length} task(s) as DONE!`
+          t('delegation.successfullyMarkedDone').replace('{count}', selectedHistoryArray.length)
         );
       } else {
         throw new Error(result.error || "Submission failed");
       }
     } catch (error) {
       console.error("Submission error:", error);
-      alert("Failed to mark tasks as DONE: " + error.message);
+      alert(t('delegation.failedMarkDone') + ": " + error.message);
     } finally {
       setIsSubmittingHistory(false);
     }
@@ -554,7 +608,7 @@ function AccountDataPage() {
       );
 
       setSuccessMessage(
-        `Successfully sent ${selectedItemsArray.length} task(s) to WhatsApp sheet!`
+        t('delegation.successfullySentWhatsApp').replace('{count}', selectedItemsArray.length)
       );
       setSelectedItems(new Set());
 
@@ -563,7 +617,7 @@ function AccountDataPage() {
       }, 2000);
     } catch (error) {
       console.error("WhatsApp submission error:", error);
-      alert("Failed to submit to WhatsApp: " + error.message);
+      alert(t('delegation.failedSubmitWhatsApp') + ": " + error.message);
     } finally {
       setIsSubmittingWhatsApp(false);
     }
@@ -640,7 +694,7 @@ function AccountDataPage() {
       setIsCameraLoading(true);
 
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setCameraError("Camera not supported on this device");
+        setCameraError(t('delegation.cameraNotSupported'));
         setIsCameraLoading(false);
         return;
       }
@@ -674,7 +728,7 @@ function AccountDataPage() {
 
           const checkReady = () => {
             if (metadataLoaded && canPlay) {
-              
+
               resolve();
             }
           };
@@ -709,15 +763,13 @@ function AccountDataPage() {
       console.error("Camera error:", error);
 
       if (error.name === "NotAllowedError") {
-        setCameraError(
-          "Camera access denied. Please allow camera permissions."
-        );
+        setCameraError(t('delegation.cameraAccessDenied'));
       } else if (error.name === "NotFoundError") {
-        setCameraError("No camera found on this device.");
+        setCameraError(t('delegation.noCameraFound'));
       } else if (error.name === "NotReadableError") {
-        setCameraError("Camera is being used by another application.");
+        setCameraError(t('delegation.cameraInUse'));
       } else {
-        setCameraError("Unable to access camera: " + error.message);
+        setCameraError(t('delegation.cameraError') + ": " + error.message);
       }
     } finally {
       setIsCameraLoading(false);
@@ -748,27 +800,27 @@ function AccountDataPage() {
 
   const capturePhoto = async () => {
     if (!videoRef.current || !currentCaptureId) {
-      alert("Camera not initialized. Please try again.");
+      alert(t('delegation.cameraNotInitialized'));
       return;
     }
 
     const video = videoRef.current;
 
     try {
-    
+
 
       if (video.readyState < 2) {
-        alert("Camera is still loading. Please wait a moment and try again.");
+        alert(t('delegation.cameraStillLoading'));
         return;
       }
 
       if (!video.videoWidth || !video.videoHeight) {
-        alert("Camera dimensions not available. Please restart camera.");
+        alert(t('delegation.cameraDimensionsUnavailable'));
         return;
       }
 
       if (!cameraStream || !cameraStream.active) {
-        alert("Camera stream not active. Please restart camera.");
+        alert(t('delegation.cameraStreamInactive'));
         return;
       }
 
@@ -780,7 +832,7 @@ function AccountDataPage() {
 
       const context = canvas.getContext("2d");
       if (!context) {
-        alert("Failed to create canvas context");
+        alert(t('delegation.failedCanvasContext'));
         return;
       }
 
@@ -814,10 +866,10 @@ function AccountDataPage() {
 
       handleImageUpload(currentCaptureId, { target: { files: [file] } });
 
-      alert("✅ Photo captured successfully!");
+      alert(t('delegation.photoCapturedSuccess'));
     } catch (error) {
       console.error("❌ Capture error:", error);
-      alert("Failed to capture photo: " + error.message);
+      alert(t('delegation.failedCapturePhoto') + ": " + error.message);
     }
   };
 
@@ -855,7 +907,7 @@ function AccountDataPage() {
 
     if (missingRemarks.length > 0) {
       alert(
-        `Please provide remarks for items marked as "Not Required" or "Pending". ${missingRemarks.length} item(s) are missing remarks.`
+        t('common.provideRemarksForNotRequired').replace('{count}', missingRemarks.length)
       );
       return;
     }
@@ -869,7 +921,7 @@ function AccountDataPage() {
 
     if (missingRequiredImages.length > 0) {
       alert(
-        `Please upload images for all required attachments. ${missingRequiredImages.length} item(s) are missing required images.`
+        t('delegation.uploadRequiredImages').replace('{count}', missingRequiredImages.length)
       );
       return;
     }
@@ -973,7 +1025,9 @@ function AccountDataPage() {
         setHistoryData((prev) => [...submittedItems, ...prev]);
 
         setSuccessMessage(
-          `Successfully processed ${selectedItemsArray.length} task records! Tasks moved to history.`
+          t('delegation.successfullyProcessed')
+            .replace('{count}', selectedItemsArray.length)
+            .replace('{sheetName}', CONFIG.SHEET_NAME) + " " + t('delegation.tasksMovedToHistory')
         );
         setSelectedItems(new Set());
         setAdditionalData({});
@@ -985,7 +1039,7 @@ function AccountDataPage() {
       }
     } catch (error) {
       console.error("Submission error:", error);
-      alert("Failed to submit task records: " + error.message);
+      alert(t('delegation.failedSubmitRecords') + ": " + error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -997,88 +1051,88 @@ function AccountDataPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-  <h1 className="text-2xl font-bold tracking-tight text-purple-700">
-    {showHistory
-      ? CONFIG.PAGE_CONFIG.historyTitle
-      : CONFIG.PAGE_CONFIG.title}
-  </h1>
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <h1 className="text-2xl font-bold tracking-tight text-purple-700">
+            {showHistory
+              ? t(CONFIG.PAGE_CONFIG.historyTitle)
+              : t(CONFIG.PAGE_CONFIG.title)}
+          </h1>
 
-  {/* Right controls */}
-  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-    {/* Search */}
-    <div className="relative w-full sm:w-auto">
-      <Search
-        className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400"
-        size={18}
-      />
-      <input
-        type="text"
-        placeholder={showHistory ? "Search history..." : "Search tasks..."}
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full rounded-md border border-purple-200 py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
-      />
-    </div>
+          {/* Right controls */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            {/* Search */}
+            <div className="relative w-full sm:w-auto">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400"
+                size={18}
+              />
+              <input
+                type="text"
+                placeholder={showHistory ? t('common.search') + " " + t('delegation.historyTitle').toLowerCase() + "..." : t('common.search') + " " + t('assignTask.checklistTasks').toLowerCase() + "..."}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-md border border-purple-200 py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
 
-    {/* History toggle */}
-    <button
-      onClick={toggleHistory}
-      className="flex items-center justify-center rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 py-2 px-4 text-sm font-medium text-white hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-    >
-      {showHistory ? (
-        <>
-          <ArrowLeft className="mr-1 h-4 w-4" />
-          <span>Back to Tasks</span>
-        </>
-      ) : (
-        <>
-          <History className="mr-1 h-4 w-4" />
-          <span>View History</span>
-        </>
-      )}
-    </button>
+            {/* History toggle */}
+            <button
+              onClick={toggleHistory}
+              className="flex items-center justify-center rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 py-2 px-4 text-sm font-medium text-white hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              {showHistory ? (
+                <>
+                  <ArrowLeft className="mr-1 h-4 w-4" />
+                  <span>{t('delegation.backToTasks')}</span>
+                </>
+              ) : (
+                <>
+                  <History className="mr-1 h-4 w-4" />
+                  <span>{t('delegation.viewHistory')}</span>
+                </>
+              )}
+            </button>
 
-    {/* History DONE button */}
-    {showHistory && selectedHistoryItems.size > 0 && (
-      <button
-        onClick={handleSubmitHistoryDone}
-        disabled={isSubmittingHistory}
-        className="flex items-center justify-center rounded-md bg-gradient-to-r from-green-600 to-emerald-600 py-2 px-4 text-sm font-medium text-white hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isSubmittingHistory
-          ? "Processing..."
-          : `Mark as DONE (${selectedHistoryItems.size})`}
-      </button>
-    )}
+            {/* History DONE button */}
+            {showHistory && selectedHistoryItems.size > 0 && (
+              <button
+                onClick={handleSubmitHistoryDone}
+                disabled={isSubmittingHistory}
+                className="flex items-center justify-center rounded-md bg-gradient-to-r from-green-600 to-emerald-600 py-2 px-4 text-sm font-medium text-white hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSubmittingHistory
+                  ? t('delegation.processing')
+                  : t('common.markAsDoneWithCount').replace('{count}', selectedHistoryItems.size)}
+              </button>
+            )}
 
-    {/* Task action buttons (only when NOT history) */}
-    {!showHistory && (
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <button
-          onClick={handleSubmit}
-          disabled={selectedItemsCount === 0 || isSubmitting}
-          className="flex items-center justify-center rounded-md bg-gradient-to-r from-purple-600 to-pink-600 py-2 px-4 text-sm font-medium text-white hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isSubmitting
-            ? "Processing..."
-            : `Submit Selected (${selectedItemsCount})`}
-        </button>
+            {/* Task action buttons (only when NOT history) */}
+            {!showHistory && (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <button
+                  onClick={handleSubmit}
+                  disabled={selectedItemsCount === 0 || isSubmitting}
+                  className="flex items-center justify-center rounded-md bg-gradient-to-r from-purple-600 to-pink-600 py-2 px-4 text-sm font-medium text-white hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSubmitting
+                    ? t('messages.processing')
+                    : `${t('delegation.markAsDone')} (${selectedItemsCount})`}
+                </button>
 
-        {/* WhatsApp button - sits next to submit on desktop, below on mobile */}
-        <button
-          onClick={handleWhatsAppSubmit}
-          disabled={selectedItemsCount === 0 || isSubmittingWhatsApp}
-          className="flex items-center justify-center rounded-md bg-gradient-to-r from-green-600 to-emerald-600 py-2 px-4 text-sm font-medium text-white hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isSubmittingWhatsApp
-            ? "Sending..."
-            : `WhatsApp (${selectedItemsCount})`}
-        </button>
-      </div>
-    )}
-  </div>
-</div>
+                {/* WhatsApp button - sits next to submit on desktop, below on mobile */}
+                <button
+                  onClick={handleWhatsAppSubmit}
+                  disabled={selectedItemsCount === 0 || isSubmittingWhatsApp}
+                  className="flex items-center justify-center rounded-md bg-gradient-to-r from-green-600 to-emerald-600 py-2 px-4 text-sm font-medium text-white hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSubmittingWhatsApp
+                    ? t('messages.processing')
+                    : `${t('delegation.whatsappSubmit')} (${selectedItemsCount})`}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
 
         {successMessage && (
@@ -1100,22 +1154,20 @@ function AccountDataPage() {
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
             <h2 className="text-purple-700 font-medium">
               {showHistory
-                ? `Completed ${CONFIG.SHEET_NAME} Tasks`
-                : `Pending ${CONFIG.SHEET_NAME} Tasks`}
+                ? t('common.completedTasks').replace('{sheetName}', CONFIG.SHEET_NAME)
+                : t('common.pendingTasks').replace('{sheetName}', CONFIG.SHEET_NAME)}
             </h2>
             <p className="text-purple-600 text-sm">
               {showHistory
-                ? `${CONFIG.PAGE_CONFIG.historyDescription} for ${
-                    userRole === "admin" ? "all" : "your"
-                  } tasks`
-                : CONFIG.PAGE_CONFIG.description}
+                ? `${t(CONFIG.PAGE_CONFIG.historyDescription)} ${t('common.for')} ${userRole === "admin" ? t('common.allTasks') : t('common.yourTasks')} ${t('common.tasks')}`
+                : t(CONFIG.PAGE_CONFIG.description)}
             </p>
           </div>
 
           {loading ? (
             <div className="text-center py-10">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-              <p className="text-purple-600">Loading task data...</p>
+              <p className="text-purple-600">{t('common.loadingTaskData')}</p>
             </div>
           ) : error ? (
             <div className="bg-red-50 p-4 rounded-md text-red-800 text-center">
@@ -1124,110 +1176,110 @@ function AccountDataPage() {
                 className="underline ml-2"
                 onClick={() => window.location.reload()}
               >
-                Try again
+                {t('delegation.tryAgain')}
               </button>
             </div>
           ) : showHistory ? (
             <>
               {/* History Filters */}
               <div className="p-4 border-b border-purple-100 bg-gray-50">
-  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-    {/* Member filter card */}
-    {getFilteredMembersList().length > 0 && (
-      <div className="w-full rounded-lg border border-gray-200 bg-white p-3 md:w-auto">
-        <div className="mb-2 flex items-center">
-          <span className="text-sm font-medium text-purple-700">
-            Filter by Member
-          </span>
-        </div>
-        <div className="flex max-h-32 flex-wrap gap-3 overflow-y-auto">
-          {getFilteredMembersList().map((member, idx) => (
-            <div key={idx} className="flex items-center">
-              <input
-                id={`member-${idx}`}
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                checked={selectedMembers.includes(member)}
-                onChange={() => handleMemberSelection(member)}
-              />
-              <label
-                htmlFor={`member-${idx}`}
-                className="ml-2 text-sm text-gray-700"
-              >
-                {member}
-              </label>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  {/* Member filter card */}
+                  {getFilteredMembersList().length > 0 && (
+                    <div className="w-full rounded-lg border border-gray-200 bg-white p-3 md:w-auto">
+                      <div className="mb-2 flex items-center">
+                        <span className="text-sm font-medium text-purple-700">
+                          {t('common.filterMember')}
+                        </span>
+                      </div>
+                      <div className="flex max-h-32 flex-wrap gap-3 overflow-y-auto">
+                        {getFilteredMembersList().map((member, idx) => (
+                          <div key={idx} className="flex items-center">
+                            <input
+                              id={`member-${idx}`}
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                              checked={selectedMembers.includes(member)}
+                              onChange={() => handleMemberSelection(member)}
+                            />
+                            <label
+                              htmlFor={`member-${idx}`}
+                              className="ml-2 text-sm text-gray-700"
+                            >
+                              {member}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-    {/* Date range filter card */}
-    <div className="w-full rounded-lg border border-gray-200 bg-white p-3 md:w-auto">
-      <div className="mb-2 flex items-center">
-        <span className="text-sm font-medium text-purple-700">
-          Filter by Date Range
-        </span>
-      </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <div className="flex items-center">
-          <label
-            htmlFor="start-date"
-            className="mr-1 text-sm text-gray-700"
-          >
-            From
-          </label>
-          <input
-            id="start-date"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="rounded-md border border-gray-200 p-1 text-sm"
-          />
-        </div>
-        <div className="flex items-center">
-          <label
-            htmlFor="end-date"
-            className="mr-1 text-sm text-gray-700"
-          >
-            To
-          </label>
-          <input
-            id="end-date"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="rounded-md border border-gray-200 p-1 text-sm"
-          />
-        </div>
-      </div>
-    </div>
+                  {/* Date range filter card */}
+                  <div className="w-full rounded-lg border border-gray-200 bg-white p-3 md:w-auto">
+                    <div className="mb-2 flex items-center">
+                      <span className="text-sm font-medium text-purple-700">
+                        {t('common.filterByDate')}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <div className="flex items-center">
+                        <label
+                          htmlFor="start-date"
+                          className="mr-1 text-sm text-gray-700"
+                        >
+                          {t('common.from')}
+                        </label>
+                        <input
+                          id="start-date"
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="rounded-md border border-gray-200 p-1 text-sm"
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <label
+                          htmlFor="end-date"
+                          className="mr-1 text-sm text-gray-700"
+                        >
+                          {t('common.to')}
+                        </label>
+                        <input
+                          id="end-date"
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="rounded-md border border-gray-200 p-1 text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-    {/* Clear filters button */}
-    {(selectedMembers.length > 0 || startDate || endDate || searchTerm) && (
-      <div className="flex w-full items-start md:w-auto md:items-center">
-        <button
-          onClick={resetFilters}
-          className="w-full rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-200 md:w-auto"
-        >
-          Clear All Filters
-        </button>
-      </div>
-    )}
-  </div>
-</div>
+                  {/* Clear filters button */}
+                  {(selectedMembers.length > 0 || startDate || endDate || searchTerm) && (
+                    <div className="flex w-full items-start md:w-auto md:items-center">
+                      <button
+                        onClick={resetFilters}
+                        className="w-full rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-200 md:w-auto"
+                      >
+                        {t('common.clearAll')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
 
 
               {/* Task Statistics */}
               <div className="p-4 border-b border-purple-100 bg-blue-50">
                 <div className="flex flex-col">
-                  <h3 className="text-sm font-medium text-blue-700 mb-2">
-                    Task Completion Statistics:
+                  <h3 className="text-sm font-medium text-purple-700">
+                    {t('common.statsTitle')}
                   </h3>
                   <div className="flex flex-wrap gap-4">
-                    <div className="px-3 py-2 bg-white rounded-md shadow-sm">
+                    <div className="rounded-md bg-white px-3 py-2 shadow-sm">
                       <span className="text-xs text-gray-500">
-                        Total Completed
+                        {t('common.totalCompleted')}
                       </span>
                       <div className="text-lg font-semibold text-blue-600">
                         {getTaskStatistics().totalCompleted}
@@ -1238,15 +1290,15 @@ function AccountDataPage() {
                       startDate ||
                       endDate ||
                       searchTerm) && (
-                      <div className="px-3 py-2 bg-white rounded-md shadow-sm">
-                        <span className="text-xs text-gray-500">
-                          Filtered Results
-                        </span>
-                        <div className="text-lg font-semibold text-blue-600">
-                          {getTaskStatistics().filteredTotal}
+                        <div className="px-3 py-2 bg-white rounded-md shadow-sm">
+                          <span className="text-xs text-gray-500">
+                            {t('common.filteredResults')}
+                          </span>
+                          <div className="text-lg font-semibold text-blue-600">
+                            {getTaskStatistics().filteredTotal}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {selectedMembers.map((member) => (
                       <div
@@ -1263,748 +1315,740 @@ function AccountDataPage() {
                 </div>
               </div>
 
-           {/* History Table */}
-<div className="overflow-x-auto">
-  {filteredHistoryData.length === 0 ? (
-    <table className="min-w-full divide-y divide-gray-200">
-      <tbody>
-        <tr>
-          <td
-            colSpan={14}
-            className="px-6 py-4 text-center text-gray-500"
-          >
-            {searchTerm ||
-            selectedMembers.length > 0 ||
-            startDate ||
-            endDate
-              ? "No historical records matching your filters"
-              : "No completed records found"}
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  ) : (
-    <>
-      {/* Mobile: card layout */}
-      <div className="grid grid-cols-1 gap-3 md:hidden max-h-[420px] overflow-y-auto">
-        {/* Mobile select-all row */}
-        <div className="flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-            checked={
-              filteredHistoryData.filter((h) => h["col15"] !== "DONE").length >
-                0 &&
-              selectedHistoryItems.size ===
-                filteredHistoryData.filter((h) => h["col15"] !== "DONE")
-                  .length
-            }
-            onChange={(e) => {
-              if (e.target.checked) {
-                const selectableIds = filteredHistoryData
-                  .filter((h) => h["col15"] !== "DONE")
-                  .map((h) => h._id);
-                setSelectedHistoryItems(new Set(selectableIds));
-              } else {
-                setSelectedHistoryItems(new Set());
-              }
-            }}
-          />
-          <span className="text-xs font-medium text-gray-700">
-            Select all (non-DONE)
-          </span>
-        </div>
+              {/* History Table */}
+              <div className="overflow-x-auto">
+                {filteredHistoryData.length === 0 ? (
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <tbody>
+                      <tr>
+                        <td
+                          colSpan={14}
+                          className="px-6 py-4 text-center text-gray-500"
+                        >
+                          {searchTerm ||
+                            selectedMembers.length > 0 ||
+                            startDate ||
+                            endDate
+                            ? t('history.noRecordsMatchingFilters')
+                            : t('history.noCompletedRecords')}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                ) : (
+                  <>
+                    {/* Mobile: card layout */}
+                    <div className="grid grid-cols-1 gap-3 md:hidden max-h-[420px] overflow-y-auto">
+                      {/* Mobile select-all row */}
+                      <div className="flex items-center gap-2 rounded-md bg-gray-50 px-3 py-2">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                          checked={
+                            filteredHistoryData.filter((h) => h["col15"] !== "DONE").length >
+                            0 &&
+                            selectedHistoryItems.size ===
+                            filteredHistoryData.filter((h) => h["col15"] !== "DONE")
+                              .length
+                          }
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              const selectableIds = filteredHistoryData
+                                .filter((h) => h["col15"] !== "DONE")
+                                .map((h) => h._id);
+                              setSelectedHistoryItems(new Set(selectableIds));
+                            } else {
+                              setSelectedHistoryItems(new Set());
+                            }
+                          }}
+                        />
+                        <span className="text-xs font-medium text-gray-700">
+                          {t('common.selectAllNonDone')}
+                        </span>
+                      </div>
 
-        {filteredHistoryData.map((history) => {
-          const isDone = history["col15"] === "DONE";
-          const isSelected = selectedHistoryItems.has(history._id);
+                      {filteredHistoryData.map((history) => {
+                        const isDone = history["col15"] === "DONE";
+                        const isSelected = selectedHistoryItems.has(history._id);
 
-          return (
-            <div
-              key={history._id}
-              className={`rounded-lg border px-3 py-3 text-sm shadow-sm ${
-                isDone
-                  ? "bg-green-100 border-green-200"
-                  : isSelected
-                  ? "bg-purple-50 border-purple-200"
-                  : "bg-white border-gray-200"
-              }`}
-            >
-              {/* Top row: checkbox + Task ID + Status */}
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                    checked={isSelected}
-                    disabled={isDone}
-                    onChange={(e) =>
-                      handleHistoryCheckboxClick(
-                        e,
-                        history._id,
-                        history["col15"]
-                      )
-                    }
-                  />
-                  <span className="text-xs font-semibold text-gray-700">
-                    {history["col1"] || "—"}
-                  </span>
-                </div>
-                <span
-                  className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${
-                    history["col12"] === "Completed"
-                      ? "bg-green-100 text-green-800"
-                      : history["col12"] === "Not Required"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : history["col12"] === "Pending"
-                      ? "bg-red-100 text-red-800"
-                      : history["col12"] === "Yes"
-                      ? "bg-green-100 text-green-800"
-                      : history["col12"] === "No"
-                      ? "bg-red-100 text-red-800"
-                      : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {history["col12"] || "—"}
-                </span>
+                        return (
+                          <div
+                            key={history._id}
+                            className={`rounded-lg border px-3 py-3 text-sm shadow-sm ${isDone
+                              ? "bg-green-100 border-green-200"
+                              : isSelected
+                                ? "bg-purple-50 border-purple-200"
+                                : "bg-white border-gray-200"
+                              }`}
+                          >
+                            {/* Top row: checkbox + Task ID + Status */}
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                  checked={isSelected}
+                                  disabled={isDone}
+                                  onChange={(e) =>
+                                    handleHistoryCheckboxClick(
+                                      e,
+                                      history._id,
+                                      history["col15"]
+                                    )
+                                  }
+                                />
+                                <span className="text-xs font-semibold text-gray-700">
+                                  {history["col1"] || "—"}
+                                </span>
+                              </div>
+                              <span
+                                className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${history["col12"] === "Completed"
+                                  ? "bg-green-100 text-green-800"
+                                  : history["col12"] === "Not Required"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : history["col12"] === "Pending"
+                                      ? "bg-red-100 text-red-800"
+                                      : history["col12"] === "Yes"
+                                        ? "bg-green-100 text-green-800"
+                                        : history["col12"] === "No"
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-gray-100 text-gray-800"
+                                  }`}
+                              >
+                                {translateValue(history["col12"])}
+                              </span>
+                            </div>
+
+                            {/* Main info */}
+                            <div className="space-y-1 text-xs text-gray-700">
+                              <div className="flex justify-between gap-2">
+                                <span className="font-semibold">{t('table.section')}:</span>
+                                <span className="text-right">
+                                  {history["col2"] || "—"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-2">
+                                <span className="font-semibold">{t('assignTask.givenBy')}:</span>
+                                <span className="text-right">
+                                  {history["col3"] || "—"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-2">
+                                <span className="font-semibold">{t('table.name')}:</span>
+                                <span className="text-right">
+                                  {history["col4"] || "—"}
+                                </span>
+                              </div>
+                              <div className="mt-1">
+                                <span className="font-semibold">{t('table.task')}:</span>
+                                <p
+                                  className="mt-0.5 break-words text-[13px]"
+                                  title={history["col5"]}
+                                >
+                                  {history["col5"] || "—"}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Dates + flags */}
+                            <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                              <div className="rounded-md bg-yellow-50 p-1.5">
+                                <div className="text-[11px] font-semibold text-gray-700">
+                                  {t('table.taskStartDate')}
+                                </div>
+                                <div className="text-gray-900">
+                                  {history["col6"] || "—"}
+                                </div>
+                              </div>
+                              <div className="rounded-md bg-green-50 p-1.5">
+                                <div className="text-[11px] font-semibold text-gray-700">
+                                  {t('table.actualDate')}
+                                </div>
+                                <div className="text-gray-900">
+                                  {history["col10"] || "—"}
+                                </div>
+                              </div>
+                              <div className="rounded-md bg-gray-50 p-1.5">
+                                <div className="text-[11px] font-semibold text-gray-700">
+                                  {t('table.frequency')}
+                                </div>
+                                <div className="text-gray-900">
+                                  {translateValue(history["col7"], 'frequency')}
+                                </div>
+                              </div>
+                              <div className="rounded-md bg-gray-50 p-1.5">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {t('assignTask.taskId')}: {history["col1"] || "—"}
+                                </div>
+                                <div className="text-xs text-purple-600">
+                                  {t('table.date')}: {history["col11"] || "—"} | {t('assignTask.department')}: {history["col2"]}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Remarks + attachment */}
+                            <div className="mt-2 border-t border-gray-100 pt-2 text-xs">
+                              <div className="mb-1">
+                                <span className="font-semibold">{t('assignTask.remarks')}:</span>
+                                <p
+                                  className="mt-0.5 break-words"
+                                  title={history["col13"]}
+                                >
+                                  {history["col13"] || "—"}
+                                </p>
+                              </div>
+                              <div>
+                                <span className="font-semibold">{t('table.image')}:</span>
+                                {history["col14"] ? (
+                                  <a
+                                    href={history["col14"]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-1 inline-flex items-center text-blue-600 underline hover:text-blue-800"
+                                  >
+                                    <img
+                                      src={
+                                        history["col14"] || "/api/placeholder/32/32"
+                                      }
+                                      alt="Attachment"
+                                      className="mr-2 h-6 w-6 rounded-md object-cover"
+                                    />
+                                    View
+                                  </a>
+                                ) : (
+                                  <span className="ml-1 text-gray-400">
+                                    {t('delegation.noAttachment')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Desktop: original table view */}
+                    <table className="hidden min-w-full divide-y divide-gray-200 md:table">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                              checked={
+                                filteredHistoryData.filter(
+                                  (h) => h["col15"] !== "DONE"
+                                ).length > 0 &&
+                                selectedHistoryItems.size ===
+                                filteredHistoryData.filter(
+                                  (h) => h["col15"] !== "DONE"
+                                ).length
+                              }
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  const selectableIds = filteredHistoryData
+                                    .filter((h) => h["col15"] !== "DONE")
+                                    .map((h) => h._id);
+                                  setSelectedHistoryItems(new Set(selectableIds));
+                                } else {
+                                  setSelectedHistoryItems(new Set());
+                                }
+                              }}
+                            />
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('table.taskId')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('table.section')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('assignTask.givenBy')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('table.name')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('table.taskDescription')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50">
+                            {t('table.taskStartDate')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('table.frequency')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('assignTask.enableReminders')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('assignTask.requireAttachment')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">
+                            {t('table.actualDate')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">
+                            {t('table.status')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-purple-50">
+                            {t('table.remarks')}
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {t('table.image')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {filteredHistoryData.map((history) => {
+                          const isDone = history["col15"] === "DONE";
+                          const isSelected = selectedHistoryItems.has(history._id);
+
+                          return (
+                            <tr
+                              key={history._id}
+                              className={`${isDone
+                                ? "bg-green-100"
+                                : isSelected
+                                  ? "bg-purple-50"
+                                  : ""
+                                } hover:bg-gray-50`}
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                  checked={isSelected}
+                                  disabled={isDone}
+                                  onChange={(e) =>
+                                    handleHistoryCheckboxClick(
+                                      e,
+                                      history._id,
+                                      history["col15"]
+                                    )
+                                  }
+                                />
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {history["col1"] || "—"}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {history["col2"] || "—"}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {history["col3"] || "—"}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {history["col4"] || "—"}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div
+                                  className="max-w-xs whitespace-normal break-words text-sm text-gray-900"
+                                  title={history["col5"]}
+                                >
+                                  {history["col5"] || "—"}
+                                </div>
+                              </td>
+                              <td className="bg-yellow-50 px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {history["col6"] || "—"}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {translateValue(history["col7"], 'frequency')}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {translateValue(history["col8"], 'yesno')}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {translateValue(history["col9"], 'yesno')}
+                                </div>
+                              </td>
+                              <td className="bg-green-50 px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {history["col10"] || "—"}
+                                </div>
+                              </td>
+                              <td className="bg-blue-50 px-6 py-4 whitespace-nowrap">
+                                <span
+                                  className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${history["col12"] === "Completed"
+                                    ? "bg-green-100 text-green-800"
+                                    : history["col12"] === "Not Required"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : history["col12"] === "Pending"
+                                        ? "bg-red-100 text-red-800"
+                                        : history["col12"] === "Yes"
+                                          ? "bg-green-100 text-green-800"
+                                          : history["col12"] === "No"
+                                            ? "bg-red-100 text-red-800"
+                                            : "bg-gray-100 text-gray-800"
+                                    }`}
+                                >
+                                  {translateValue(history["col12"])}
+                                </span>
+                              </td>
+                              <td className="bg-purple-50 px-6 py-4">
+                                <div
+                                  className="max-w-xs whitespace-normal break-words text-sm text-gray-900"
+                                  title={history["col13"]}
+                                >
+                                  {history["col13"] || "—"}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {history["col14"] ? (
+                                  <a
+                                    href={history["col14"]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center text-blue-600 underline hover:text-blue-800"
+                                  >
+                                    <img
+                                      src={
+                                        history["col14"] || "/api/placeholder/32/32"
+                                      }
+                                      alt="Attachment"
+                                      className="mr-2 h-8 w-8 rounded-md object-cover"
+                                    />
+                                    {t('delegation.view')}
+                                  </a>
+                                ) : (
+                                  <span className="text-gray-400">{t('delegation.noAttachment')}</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </>
+                )}
               </div>
-
-              {/* Main info */}
-              <div className="space-y-1 text-xs text-gray-700">
-                <div className="flex justify-between gap-2">
-                  <span className="font-semibold">Dept:</span>
-                  <span className="text-right">
-                    {history["col2"] || "—"}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <span className="font-semibold">Given By:</span>
-                  <span className="text-right">
-                    {history["col3"] || "—"}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <span className="font-semibold">Name:</span>
-                  <span className="text-right">
-                    {history["col4"] || "—"}
-                  </span>
-                </div>
-                <div className="mt-1">
-                  <span className="font-semibold">Task:</span>
-                  <p
-                    className="mt-0.5 break-words text-[13px]"
-                    title={history["col5"]}
-                  >
-                    {history["col5"] || "—"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Dates + flags */}
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-md bg-yellow-50 p-1.5">
-                  <div className="text-[11px] font-semibold text-gray-700">
-                    Start Date
-                  </div>
-                  <div className="text-gray-900">
-                    {history["col6"] || "—"}
-                  </div>
-                </div>
-                <div className="rounded-md bg-green-50 p-1.5">
-                  <div className="text-[11px] font-semibold text-gray-700">
-                    Actual Date
-                  </div>
-                  <div className="text-gray-900">
-                    {history["col10"] || "—"}
-                  </div>
-                </div>
-                <div className="rounded-md bg-gray-50 p-1.5">
-                  <div className="text-[11px] font-semibold text-gray-700">
-                    Freq
-                  </div>
-                  <div className="text-gray-900">
-                    {history["col7"] || "—"}
-                  </div>
-                </div>
-                <div className="rounded-md bg-gray-50 p-1.5">
-                  <div className="text-[11px] font-semibold text-gray-700">
-                    Reminders / Attach
-                  </div>
-                  <div className="text-gray-900">
-                    {history["col8"] || "—"} / {history["col9"] || "—"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Remarks + attachment */}
-              <div className="mt-2 border-t border-gray-100 pt-2 text-xs">
-                <div className="mb-1">
-                  <span className="font-semibold">Remarks:</span>
-                  <p
-                    className="mt-0.5 break-words"
-                    title={history["col13"]}
-                  >
-                    {history["col13"] || "—"}
-                  </p>
-                </div>
-                <div>
-                  <span className="font-semibold">Attachment:</span>
-                  {history["col14"] ? (
-                    <a
-                      href={history["col14"]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-1 inline-flex items-center text-blue-600 underline hover:text-blue-800"
-                    >
-                      <img
-                        src={
-                          history["col14"] || "/api/placeholder/32/32"
-                        }
-                        alt="Attachment"
-                        className="mr-2 h-6 w-6 rounded-md object-cover"
-                      />
-                      View
-                    </a>
-                  ) : (
-                    <span className="ml-1 text-gray-400">
-                      No attachment
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Desktop: original table view */}
-      <table className="hidden min-w-full divide-y divide-gray-200 md:table">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                checked={
-                  filteredHistoryData.filter(
-                    (h) => h["col15"] !== "DONE"
-                  ).length > 0 &&
-                  selectedHistoryItems.size ===
-                    filteredHistoryData.filter(
-                      (h) => h["col15"] !== "DONE"
-                    ).length
-                }
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    const selectableIds = filteredHistoryData
-                      .filter((h) => h["col15"] !== "DONE")
-                      .map((h) => h._id);
-                    setSelectedHistoryItems(new Set(selectableIds));
-                  } else {
-                    setSelectedHistoryItems(new Set());
-                  }
-                }}
-              />
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Task ID
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Department
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Given By
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Name
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Task Description
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50">
-              Task Start Date
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Freq
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Enable Reminders
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Require Attachment
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">
-              Actual Date
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">
-              Status
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-purple-50">
-              Remarks
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Attachment
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {filteredHistoryData.map((history) => {
-            const isDone = history["col15"] === "DONE";
-            const isSelected = selectedHistoryItems.has(history._id);
-
-            return (
-              <tr
-                key={history._id}
-                className={`${
-                  isDone
-                    ? "bg-green-100"
-                    : isSelected
-                    ? "bg-purple-50"
-                    : ""
-                } hover:bg-gray-50`}
-              >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                    checked={isSelected}
-                    disabled={isDone}
-                    onChange={(e) =>
-                      handleHistoryCheckboxClick(
-                        e,
-                        history._id,
-                        history["col15"]
-                      )
-                    }
-                  />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {history["col1"] || "—"}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {history["col2"] || "—"}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {history["col3"] || "—"}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {history["col4"] || "—"}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div
-                    className="max-w-xs whitespace-normal break-words text-sm text-gray-900"
-                    title={history["col5"]}
-                  >
-                    {history["col5"] || "—"}
-                  </div>
-                </td>
-                <td className="bg-yellow-50 px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {history["col6"] || "—"}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {history["col7"] || "—"}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {history["col8"] || "—"}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {history["col9"] || "—"}
-                  </div>
-                </td>
-                <td className="bg-green-50 px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {history["col10"] || "—"}
-                  </div>
-                </td>
-                <td className="bg-blue-50 px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                      history["col12"] === "Completed"
-                        ? "bg-green-100 text-green-800"
-                        : history["col12"] === "Not Required"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : history["col12"] === "Pending"
-                        ? "bg-red-100 text-red-800"
-                        : history["col12"] === "Yes"
-                        ? "bg-green-100 text-green-800"
-                        : history["col12"] === "No"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {history["col12"] || "—"}
-                  </span>
-                </td>
-                <td className="bg-purple-50 px-6 py-4">
-                  <div
-                    className="max-w-xs whitespace-normal break-words text-sm text-gray-900"
-                    title={history["col13"]}
-                  >
-                    {history["col13"] || "—"}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {history["col14"] ? (
-                    <a
-                      href={history["col14"]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-blue-600 underline hover:text-blue-800"
-                    >
-                      <img
-                        src={
-                          history["col14"] || "/api/placeholder/32/32"
-                        }
-                        alt="Attachment"
-                        className="mr-2 h-8 w-8 rounded-md object-cover"
-                      />
-                      View
-                    </a>
-                  ) : (
-                    <span className="text-gray-400">No attachment</span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </>
-  )}
-</div>
 
             </>
           ) : (
             /* Regular Tasks Table */
             <div className="overflow-x-auto lg:overflow-visible">
-            {/* Desktop Table */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                        checked={
-                          filteredAccountData.length > 0 &&
-                          selectedItems.size === filteredAccountData.length
-                        }
-                        onChange={handleSelectAllItems}
-                      />
-                    </th>
-                    {/* Desktop headers - all columns */}
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Given By</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Description</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50">Task Start Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Freq</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enable Reminders</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Require Attachment</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Upload Image</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredAccountData.length > 0 ? (
-                    filteredAccountData.map((account) => {
-                      const isSelected = selectedItems.has(account._id);
-                      return (
-                        <tr key={account._id} className={`${isSelected ? "bg-purple-50" : ""} hover:bg-gray-50`}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                              checked={isSelected}
-                              onChange={(e) => handleCheckboxClick(e, account._id)}
-                            />
-                          </td>
-                          {/* Desktop table cells - all your existing code */}
-                          <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col1"] || "—"}</div></td>
-                          <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col2"] || "—"}</div></td>
-                          <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col3"] || "—"}</div></td>
-                          <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col4"] || "—"}</div></td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-900 max-w-xs whitespace-normal break-words" title={account["col5"]}>
-                              {account["col5"] || "—"}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap bg-yellow-50"><div className="text-sm text-gray-900">{account["col6"] || "—"}</div></td>
-                          <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col7"] || "—"}</div></td>
-                          <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col8"] || "—"}</div></td>
-                          <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col9"] || "—"}</div></td>
-                          <td className="px-6 py-4 whitespace-nowrap bg-yellow-50">
-                            <select disabled={!isSelected} value={additionalData[account._id] || ""} onChange={(e) => {
-                              setAdditionalData((prev) => ({ ...prev, [account._id]: e.target.value }));
-                              if (e.target.value !== "Not Required" && e.target.value !== "Pending") {
-                                setRemarksData((prev) => { const newData = { ...prev }; delete newData[account._id]; return newData; });
-                              }
-                            }} className="border border-gray-300 rounded-md px-2 py-1 w-full disabled:bg-gray-100 disabled:cursor-not-allowed">
-                              <option value="">Select...</option>
-                              <option value="Completed">Completed</option>
-                              <option value="Not Required">Not Required</option>
-                              <option value="Pending">Pending</option>
-                            </select>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap bg-orange-50">
-                            <input
-                              type="text"
-                              placeholder={additionalData[account._id] === "Not Required" || additionalData[account._id] === "Pending" ? "Remarks required *" : "Enter remarks"}
-                              disabled={!isSelected || !additionalData[account._id]}
-                              value={remarksData[account._id] || ""}
-                              onChange={(e) => setRemarksData((prev) => ({ ...prev, [account._id]: e.target.value }))}
-                              className={`border rounded-md px-2 py-1 w-full disabled:bg-gray-100 disabled:cursor-not-allowed ${additionalData[account._id] === "Not Required" || additionalData[account._id] === "Pending" ? "border-red-300 bg-red-50" : "border-gray-300"}`}
-                            />
-                          </td>
-                          <td className="px-3 py-4 bg-green-50 min-w-[120px]">
-                            {/* Your existing image upload code */}
-                            {account.image ? (
-                              <div className="flex items-center">
-                                <img src={typeof account.image === "string" ? account.image : URL.createObjectURL(account.image)} alt="Receipt" className="h-10 w-10 object-cover rounded-md mr-2 flex-shrink-0" />
-                                <div className="flex flex-col min-w-0">
-                                  <span className="text-xs text-gray-500 break-words">{account.image instanceof File ? account.image.name : "Uploaded Receipt"}</span>
-                                  {account.image instanceof File ? (
-                                    <span className="text-xs text-green-600">Ready to upload</span>
-                                  ) : (
-                                    <button className="text-xs text-purple-600 hover:text-purple-800 break-words" onClick={() => window.open(account.image, "_blank")}>View Full Image</button>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex flex-col gap-2">
-                                <label htmlFor={`upload-${account._id}`} className={`flex items-center cursor-pointer ${account["col9"]?.toUpperCase() === "YES" ? "text-red-600 font-medium" : "text-purple-600"} hover:text-purple-800`}>
-                                  <Upload className="h-4 w-4 mr-1 flex-shrink-0" />
-                                  <span className="text-xs break-words">
-                                    {account["col9"]?.toUpperCase() === "YES" ? "Required Upload" : "Upload Receipt"}
-                                    {account["col9"]?.toUpperCase() === "YES" && <span className="text-red-500 ml-1">*</span>}
-                                  </span>
-                                </label>
-                                <input id={`upload-${account._id}`} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handleImageUpload(account._id, e)} disabled={!isSelected} />
-                                <button onClick={() => { console.log("Button clicked!", account._id, isSelected, isCameraLoading); setCurrentCaptureId(account._id); startCamera(); }} disabled={!isSelected || isCameraLoading} className="flex items-center text-blue-600 hover:text-blue-800 text-xs disabled:opacity-50 disabled:cursor-not-allowed">
-                                  <Camera className="h-4 w-4 mr-1 flex-shrink-0" />
-                                  <span>{isCameraLoading ? "Loading..." : "Take Photo"}</span>
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
+              {/* Desktop Table */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <td colSpan={14} className="px-6 py-4 text-center text-gray-500">
-                        {searchTerm ? "No tasks matching your search" : "No pending tasks found for today, tomorrow, or past due dates"}
-                      </td>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                          checked={
+                            filteredAccountData.length > 0 &&
+                            selectedItems.size === filteredAccountData.length
+                          }
+                          onChange={handleSelectAllItems}
+                        />
+                      </th>
+                      {/* Desktop headers - all columns */}
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.taskId')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.section')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.givenBy')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.name')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.taskDescription')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50">{t('table.taskStartDate')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.frequency')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.enableReminders')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.requireAttachment')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.status')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.remarks')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('table.image')}</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          
-            {/* Mobile Card View */}
-            <div className="lg:hidden space-y-4 p-4">
-              {filteredAccountData.length > 0 ? (
-                filteredAccountData.map((account) => {
-                  const isSelected = selectedItems.has(account._id);
-                  return (
-                    <div key={account._id} className={`border rounded-lg p-4 shadow-sm ${isSelected ? "bg-purple-50 border-purple-200" : "bg-white border-gray-200"} hover:shadow-md transition-all`}>
-                      {/* Mobile Header Row */}
-                      <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
-                        <div className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            className="h-5 w-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                            checked={isSelected}
-                            onChange={(e) => handleCheckboxClick(e, account._id)}
-                          />
-                          <div className="text-sm font-medium text-gray-900 flex items-center space-x-2">
-                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">#{account["col1"] || "—"}</span>
-                            <span className="text-gray-600">{account["col4"] || "—"}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            account["col9"]?.toUpperCase() === "YES" 
-                              ? "bg-red-100 text-red-800" 
-                              : "bg-green-100 text-green-800"
-                          }`}>
-                            {account["col9"]?.toUpperCase() === "YES" ? "Required*" : "Optional"}
-                          </span>
-                        </div>
-                      </div>
-          
-                      {/* Task Details Grid */}
-                      <div className="grid grid-cols-1 gap-3 mb-4">
-                        <div className="space-y-1">
-                          <span className="text-xs text-gray-500 font-medium">Department</span>
-                          <span className="text-sm text-gray-900 font-medium">{account["col2"] || "—"}</span>
-                        </div>
-                        <div className="space-y-1">
-                          <span className="text-xs text-gray-500 font-medium">Given By</span>
-                          <span className="text-sm text-gray-900">{account["col3"] || "—"}</span>
-                        </div>
-                        <div>
-                          <span className="text-xs text-gray-500 font-medium block mb-1">Task Description</span>
-                          <p className="text-sm text-gray-900 leading-relaxed">{account["col5"] || "—"}</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
-                          <div className="bg-yellow-50 p-3 rounded-lg">
-                            <span className="text-xs text-yellow-800 font-medium block mb-1">Start Date</span>
-                            <span className="text-sm font-semibold text-gray-900">{account["col6"] || "—"}</span>
-                          </div>
-                          <div>
-                            <span className="text-xs text-gray-500 font-medium block mb-1">Frequency</span>
-                            <span className="text-sm text-gray-900">{account["col7"] || "—"}</span>
-                          </div>
-                        </div>
-                      </div>
-          
-                      {/* Action Section */}
-                      <div className="space-y-3 pt-4 border-t border-gray-100">
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <div className="flex-1">
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                            <select
-                              disabled={!isSelected}
-                              value={additionalData[account._id] || ""}
-                              onChange={(e) => {
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredAccountData.length > 0 ? (
+                      filteredAccountData.map((account) => {
+                        const isSelected = selectedItems.has(account._id);
+                        return (
+                          <tr key={account._id} className={`${isSelected ? "bg-purple-50" : ""} hover:bg-gray-50`}>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                checked={isSelected}
+                                onChange={(e) => handleCheckboxClick(e, account._id)}
+                              />
+                            </td>
+                            {/* Desktop table cells - all your existing code */}
+                            <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col1"] || "—"}</div></td>
+                            <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col2"] || "—"}</div></td>
+                            <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col3"] || "—"}</div></td>
+                            <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{account["col4"] || "—"}</div></td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-900 max-w-xs whitespace-normal break-words" title={account["col5"]}>
+                                {account["col5"] || "—"}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap bg-yellow-50"><div className="text-sm text-gray-900">{account["col6"] || "—"}</div></td>
+                            <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{translateValue(account["col7"], 'frequency')}</div></td>
+                            <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{translateValue(account["col8"], 'yesno')}</div></td>
+                            <td className="px-6 py-4 whitespace-nowrap"><div className="text-sm text-gray-900">{translateValue(account["col9"], 'yesno')}</div></td>
+                            <td className="px-6 py-4 whitespace-nowrap bg-yellow-50">
+                              <select disabled={!isSelected} value={additionalData[account._id] || ""} onChange={(e) => {
                                 setAdditionalData((prev) => ({ ...prev, [account._id]: e.target.value }));
                                 if (e.target.value !== "Not Required" && e.target.value !== "Pending") {
                                   setRemarksData((prev) => { const newData = { ...prev }; delete newData[account._id]; return newData; });
                                 }
-                              }}
-                              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                            >
-                              <option value="">Select...</option>
-                              <option value="Completed">Completed</option>
-                              <option value="Not Required">Not Required</option>
-                              <option value="Pending">Pending</option>
-                            </select>
-                          </div>
-                          <div className="flex-1">
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
-                              Remarks {additionalData[account._id] === "Not Required" || additionalData[account._id] === "Pending" ? "*" : ""}
-                            </label>
+                              }} className="border border-gray-300 rounded-md px-2 py-1 w-full disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                <option value="">{t('common.select')}</option>
+                                <option value="Completed">{t('assignTask.completed')}</option>
+                                <option value="Not Required">{t('common.notRequired')}</option>
+                                <option value="Pending">{t('assignTask.pending')}</option>
+                              </select>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap bg-orange-50">
+                              <input
+                                type="text"
+                                placeholder={additionalData[account._id] === "Not Required" || additionalData[account._id] === "Pending" ? "Remarks required *" : "Enter remarks"}
+                                disabled={!isSelected || !additionalData[account._id]}
+                                value={remarksData[account._id] || ""}
+                                onChange={(e) => setRemarksData((prev) => ({ ...prev, [account._id]: e.target.value }))}
+                                className={`border rounded-md px-2 py-1 w-full disabled:bg-gray-100 disabled:cursor-not-allowed ${additionalData[account._id] === "Not Required" || additionalData[account._id] === "Pending" ? "border-red-300 bg-red-50" : "border-gray-300"}`}
+                              />
+                            </td>
+                            <td className="px-3 py-4 bg-green-50 min-w-[120px]">
+                              {/* Your existing image upload code */}
+                              {account.image ? (
+                                <div className="flex items-center">
+                                  <img src={typeof account.image === "string" ? account.image : URL.createObjectURL(account.image)} alt="Receipt" className="h-10 w-10 object-cover rounded-md mr-2 flex-shrink-0" />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-xs text-gray-500 break-words">{account.image instanceof File ? account.image.name : t('delegation.uploadedReceipt')}</span>
+                                    {account.image instanceof File ? (
+                                      <span className="text-xs text-green-600">{t('delegation.readyToUpload')}</span>
+                                    ) : (
+                                      <button className="text-xs text-purple-600 hover:text-purple-800 break-words" onClick={() => window.open(account.image, "_blank")}>{t('common.viewFullImage')}</button>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col gap-2">
+                                  <label htmlFor={`upload-${account._id}`} className={`flex items-center cursor-pointer ${account["col9"]?.toUpperCase() === "YES" ? "text-red-600 font-medium" : "text-purple-600"} hover:text-purple-800`}>
+                                    <Upload className="h-4 w-4 mr-1 flex-shrink-0" />
+                                    <span className="text-xs break-words">
+                                      {account["col9"]?.toUpperCase() === "YES" ? t('common.requiredUpload') : t('common.uploadReceipt')}
+                                      {account["col9"]?.toUpperCase() === "YES" && <span className="text-red-500 ml-1">*</span>}
+                                    </span>
+                                  </label>
+                                  <input id={`upload-${account._id}`} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handleImageUpload(account._id, e)} disabled={!isSelected} />
+                                  <button onClick={() => { console.log("Button clicked!", account._id, isSelected, isCameraLoading); setCurrentCaptureId(account._id); startCamera(); }} disabled={!isSelected || isCameraLoading} className="flex items-center text-blue-600 hover:text-blue-800 text-xs disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <Camera className="h-4 w-4 mr-1 flex-shrink-0" />
+                                    <span>{isCameraLoading ? t('common.loading') : t('common.takePhoto')}</span>
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={14} className="px-6 py-4 text-center text-gray-500">
+                          {searchTerm ? t('common.noTasksFound') : t('common.noPendingTasks')}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="lg:hidden space-y-4 p-4">
+                {filteredAccountData.length > 0 ? (
+                  filteredAccountData.map((account) => {
+                    const isSelected = selectedItems.has(account._id);
+                    return (
+                      <div key={account._id} className={`border rounded-lg p-4 shadow-sm ${isSelected ? "bg-purple-50 border-purple-200" : "bg-white border-gray-200"} hover:shadow-md transition-all`}>
+                        {/* Mobile Header Row */}
+                        <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
+                          <div className="flex items-center space-x-3">
                             <input
-                              type="text"
-                              placeholder={additionalData[account._id] === "Not Required" || additionalData[account._id] === "Pending" ? "Remarks required *" : "Enter remarks"}
-                              disabled={!isSelected || !additionalData[account._id]}
-                              value={remarksData[account._id] || ""}
-                              onChange={(e) => setRemarksData((prev) => ({ ...prev, [account._id]: e.target.value }))}
-                              className={`w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed focus:ring-2 focus:ring-purple-500 ${
-                                additionalData[account._id] === "Not Required" || additionalData[account._id] === "Pending"
+                              type="checkbox"
+                              className="h-5 w-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                              checked={isSelected}
+                              onChange={(e) => handleCheckboxClick(e, account._id)}
+                            />
+                            <div className="text-sm font-medium text-gray-900 flex items-center space-x-2">
+                              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">#{account["col1"] || "—"}</span>
+                              <span className="text-gray-600">{account["col4"] || "—"}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${account["col9"]?.toUpperCase() === "YES"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-green-100 text-green-800"
+                              }`}>
+                              {account["col9"]?.toUpperCase() === "YES" ? t('common.requiredUpload') : t('common.optional')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Task Details Grid */}
+                        <div className="grid grid-cols-1 gap-3 mb-4">
+                          <div className="space-y-1">
+                            <span className="text-xs text-gray-500 font-medium">{t('common.department')}</span>
+                            <span className="text-sm text-gray-900 font-medium">{account["col2"] || "—"}</span>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-xs text-gray-500 font-medium">{t('assignTask.givenBy')}</span>
+                            <span className="text-sm text-gray-900">{account["col3"] || "—"}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500 font-medium block mb-1">{t('table.taskDescription')}</span>
+                            <p className="text-sm text-gray-900 leading-relaxed">{account["col5"] || "—"}</p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                              <div className="bg-yellow-50 p-3 rounded-lg">
+                              <span className="text-xs text-yellow-800 font-medium block mb-1">{t('assignTask.startDate')}</span>
+                              <span className="text-sm font-semibold text-gray-900">{account["col6"] || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500 font-medium block mb-1">{t('table.frequency')}</span>
+                              <span className="text-sm text-gray-900">{translateValue(account["col7"], 'frequency')}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Section */}
+                        <div className="space-y-3 pt-4 border-t border-gray-100">
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            <div className="flex-1">
+                              <label className="block text-xs font-medium text-gray-700 mb-1">{t('table.status')}</label>
+                              <select
+                                disabled={!isSelected}
+                                value={additionalData[account._id] || ""}
+                                onChange={(e) => {
+                                  setAdditionalData((prev) => ({ ...prev, [account._id]: e.target.value }));
+                                  if (e.target.value !== "Not Required" && e.target.value !== "Pending") {
+                                    setRemarksData((prev) => { const newData = { ...prev }; delete newData[account._id]; return newData; });
+                                  }
+                                }}
+                                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                              >
+                                <option value="">{t('common.select')}</option>
+                                <option value="Completed">{t('assignTask.completed')}</option>
+                                <option value="Not Required">{t('common.notRequired')}</option>
+                                <option value="Pending">{t('assignTask.pending')}</option>
+                              </select>
+                            </div>
+                            <div className="flex-1">
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                {t('table.remarks')} {additionalData[account._id] === "Not Required" || additionalData[account._id] === "Pending" ? "*" : ""}
+                              </label>
+                              <input
+                                type="text"
+                                placeholder={additionalData[account._id] === "Not Required" || additionalData[account._id] === "Pending" ? t('common.remarksRequired') : t('delegation.enterRemarks')}
+                                disabled={!isSelected || !additionalData[account._id]}
+                                value={remarksData[account._id] || ""}
+                                onChange={(e) => setRemarksData((prev) => ({ ...prev, [account._id]: e.target.value }))}
+                                className={`w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed focus:ring-2 focus:ring-purple-500 ${additionalData[account._id] === "Not Required" || additionalData[account._id] === "Pending"
                                   ? "border-red-300 bg-red-50 focus:ring-red-500"
                                   : "border-gray-300 focus:border-purple-500"
-                              }`}
-                            />
-                          </div>
-                        </div>
-          
-                        {/* Image Upload Section */}
-                        <div className={`p-4 rounded-lg border-2 border-dashed ${
-                          account.image 
-                            ? "border-green-300 bg-green-50" 
-                            : account["col9"]?.toUpperCase() === "YES" 
-                              ? "border-red-300 bg-red-50" 
-                              : "border-gray-300 bg-gray-50"
-                        }`}>
-                          {account.image ? (
-                            <div className="flex items-start space-x-3">
-                              <img
-                                src={typeof account.image === "string" ? account.image : URL.createObjectURL(account.image)}
-                                alt="Receipt"
-                                className="h-16 w-16 object-cover rounded-lg flex-shrink-0"
+                                  }`}
                               />
-                              <div className="min-w-0 flex-1 pt-1">
-                                <p className="text-sm font-medium text-gray-900 truncate">{account.image instanceof File ? account.image.name : "Uploaded Receipt"}</p>
-                                {account.image instanceof File ? (
-                                  <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full mt-1">Ready to upload</span>
-                                ) : (
-                                  <button
-                                    className="text-xs text-purple-600 hover:text-purple-800 underline mt-1"
-                                    onClick={() => window.open(account.image, "_blank")}
-                                  >
-                                    View Full Image →
-                                  </button>
-                                )}
-                              </div>
                             </div>
-                          ) : (
-                            <div className="space-y-3">
-                              <div className="flex flex-col sm:flex-row gap-3">
-                                <label
-                                  htmlFor={`upload-${account._id}`}
-                                  className={`flex-1 flex items-center justify-center p-3 rounded-lg font-medium text-sm cursor-pointer transition-colors ${
-                                    account["col9"]?.toUpperCase() === "YES"
+                          </div>
+
+                          {/* Image Upload Section */}
+                          <div className={`p-4 rounded-lg border-2 border-dashed ${account.image
+                            ? "border-green-300 bg-green-50"
+                            : account["col9"]?.toUpperCase() === "YES"
+                              ? "border-red-300 bg-red-50"
+                              : "border-gray-300 bg-gray-50"
+                            }`}>
+                            {account.image ? (
+                              <div className="flex items-start space-x-3">
+                                <img
+                                  src={typeof account.image === "string" ? account.image : URL.createObjectURL(account.image)}
+                                  alt="Receipt"
+                                  className="h-16 w-16 object-cover rounded-lg flex-shrink-0"
+                                />
+                                <div className="min-w-0 flex-1 pt-1">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{account.image instanceof File ? account.image.name : t('delegation.uploadedReceipt')}</p>
+                                  {account.image instanceof File ? (
+                                    <span className="inline-block px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full mt-1">{t('delegation.readyToUpload')}</span>
+                                  ) : (
+                                    <button
+                                      className="text-xs text-purple-600 hover:text-purple-800 underline mt-1"
+                                      onClick={() => window.open(account.image, "_blank")}
+                                    >
+                                      {t('delegation.viewFullImage')} →
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-3">
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                  <label
+                                    htmlFor={`upload-${account._id}`}
+                                    className={`flex-1 flex items-center justify-center p-3 rounded-lg font-medium text-sm cursor-pointer transition-colors ${account["col9"]?.toUpperCase() === "YES"
                                       ? "bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
                                       : "bg-purple-100 text-purple-800 border-2 border-purple-300 hover:bg-purple-200"
-                                  }`}
-                                >
-                                  <Upload className="h-5 w-5 mr-2 flex-shrink-0" />
-                                  {account["col9"]?.toUpperCase() === "YES" ? "Required Upload *" : "Upload Receipt"}
-                                </label>
-                                <input
-                                  id={`upload-${account._id}`}
-                                  type="file"
-                                  accept="image/*"
-                                  capture="environment"
-                                  className="hidden"
-                                  onChange={(e) => handleImageUpload(account._id, e)}
-                                  disabled={!isSelected}
-                                />
-                                <button
-                                  onClick={() => {
-                                    console.log("Button clicked!", account._id, isSelected, isCameraLoading);
-                                    setCurrentCaptureId(account._id);
-                                    startCamera();
-                                  }}
-                                  disabled={!isSelected || isCameraLoading}
-                                  className="flex-1 flex items-center justify-center p-3 bg-blue-100 text-blue-800 rounded-lg font-medium text-sm hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                >
-                                  <Camera className="h-5 w-5 mr-2 flex-shrink-0" />
-                                  {isCameraLoading ? "Loading..." : "Take Photo"}
-                                </button>
+                                      }`}
+                                  >
+                                    <Upload className="h-5 w-5 mr-2 flex-shrink-0" />
+                                    {account["col9"]?.toUpperCase() === "YES" ? t('common.requiredUpload') + " *" : t('common.uploadReceipt')}
+                                  </label>
+                                  <input
+                                    id={`upload-${account._id}`}
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    className="hidden"
+                                    onChange={(e) => handleImageUpload(account._id, e)}
+                                    disabled={!isSelected}
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      console.log("Button clicked!", account._id, isSelected, isCameraLoading);
+                                      setCurrentCaptureId(account._id);
+                                      startCamera();
+                                    }}
+                                    disabled={!isSelected || isCameraLoading}
+                                    className="flex-1 flex items-center justify-center p-3 bg-blue-100 text-blue-800 rounded-lg font-medium text-sm hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                  >
+                                    <Camera className="h-5 w-5 mr-2 flex-shrink-0" />
+                                    {isCameraLoading ? t('common.loading') : t('delegation.takePhoto')}
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Extra Info Row */}
+                        <div className="flex items-center justify-between pt-3 mt-4 border-t border-gray-100 text-xs text-gray-500">
+                          <span>{t('common.reminders')}: {account["col8"] || "—"}</span>
                         </div>
                       </div>
-          
-                      {/* Extra Info Row */}
-                      <div className="flex items-center justify-between pt-3 mt-4 border-t border-gray-100 text-xs text-gray-500">
-                        <span>Reminders: {account["col8"] || "—"}</span>
-                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-gray-500 text-lg mb-2">
+                      {searchTerm ? t('common.noTasksFound') : t('common.noPendingTasks')}
                     </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-gray-500 text-lg mb-2">
-                    {searchTerm ? "No tasks matching your search" : "No pending tasks found for today, tomorrow, or past due dates"}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-          
+
           )}
         </div>
         {/* Camera Modal - Add this before the last closing </div> */}
@@ -2012,7 +2056,7 @@ function AccountDataPage() {
           <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full overflow-hidden">
               <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
-                <h3 className="text-lg font-semibold">📸 Take Photo</h3>
+                <h3 className="text-lg font-semibold">📸 {t('delegation.takePhoto')}</h3>
                 <button
                   onClick={stopCamera}
                   className="text-white hover:text-gray-200 transition-colors"
@@ -2034,7 +2078,7 @@ function AccountDataPage() {
                   <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="text-white text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent mx-auto mb-3"></div>
-                      <p>Initializing camera...</p>
+                      <p>{t('delegation.initializingCamera')}</p>
                     </div>
                   </div>
                 )}
@@ -2052,7 +2096,7 @@ function AccountDataPage() {
                   onClick={stopCamera}
                   className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
                 >
-                  Cancel
+                  {t('delegation.cancel')}
                 </button>
                 <button
                   type="button"
@@ -2060,7 +2104,7 @@ function AccountDataPage() {
                   disabled={isCameraLoading}
                   className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
-                  📸 Capture Photo
+                  {t('delegation.capturePhotoButton')}
                 </button>
               </div>
             </div>

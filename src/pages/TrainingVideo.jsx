@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { X, Play, Users, User, Video } from 'lucide-react'
 import AdminLayout from "../components/layout/AdminLayout";
+import { useTranslation } from "../contexts/TranslationContext";
 
 const HelpVideo = () => {
+    const { t } = useTranslation();
     const [userRole, setUserRole] = useState("")
     const [username, setUsername] = useState("")
     const [isVideoPlaying, setIsVideoPlaying] = useState(false)
@@ -43,38 +45,38 @@ const HelpVideo = () => {
                 <div className="max-w-4xl mx-auto">
                     {/* Header */}
                     <div className="mb-8">
-  <div className="flex flex-wrap items-center justify-between gap-4">
-    
-    {/* Left Section */}
-    <div className="flex items-start sm:items-center gap-3 flex-1 min-w-[240px]">
-      <div className="p-3 bg-gradient-to-r from-red-500 to-purple-500 rounded-lg">
-        <Video className="h-6 w-6 text-white" />
-      </div>
+                        <div className="flex flex-wrap items-center justify-between gap-4">
 
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 leading-tight">
-          Help Video
-        </h1>
-        <p className="text-gray-600 mt-1 text-sm sm:text-base">
-          Video tutorial and guidance for using the system
-        </p>
-      </div>
-    </div>
+                            {/* Left Section */}
+                            <div className="flex items-start sm:items-center gap-3 flex-1 min-w-[240px]">
+                                <div className="p-3 bg-gradient-to-r from-red-500 to-purple-500 rounded-lg">
+                                    <Video className="h-6 w-6 text-white" />
+                                </div>
 
-    {/* Right Section */}
-    <div className="flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-sm w-full sm:w-auto justify-center sm:justify-normal">
-      {userRole === "admin" ? (
-        <Users className="h-5 w-5 text-blue-600" />
-      ) : (
-        <User className="h-5 w-5 text-green-600" />
-      )}
-      <span className="text-sm font-medium text-gray-700">
-        {username} ({userRole === "admin" ? "Admin" : "User"})
-      </span>
-    </div>
+                                <div>
+                                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 leading-tight">
+                                        {t('trainingVideo.title')}
+                                    </h1>
+                                    <p className="text-gray-600 mt-1 text-sm sm:text-base">
+                                        {t('trainingVideo.subtitle')}
+                                    </p>
+                                </div>
+                            </div>
 
-  </div>
-</div>
+                            {/* Right Section */}
+                            <div className="flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-sm w-full sm:w-auto justify-center sm:justify-normal">
+                                {userRole === "admin" ? (
+                                    <Users className="h-5 w-5 text-blue-600" />
+                                ) : (
+                                    <User className="h-5 w-5 text-green-600" />
+                                )}
+                                <span className="text-sm font-medium text-gray-700">
+                                    {username} ({userRole === "admin" ? t('common.admin') : t('common.user')})
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
 
 
                     {/* Help Video Content */}
@@ -83,7 +85,7 @@ const HelpVideo = () => {
                             <div className="flex items-center gap-3 mb-6">
                                 <Play className="h-6 w-6 text-red-600" />
                                 <h2 className="text-2xl font-semibold text-gray-800">
-                                    Help Video {userRole === "admin" ? "(Admin Guide)" : "(User Guide)"}
+                                    {t('trainingVideo.title')} {userRole === "admin" ? `(${t('trainingVideo.adminGuide')})` : `(${t('trainingVideo.userGuide')})`}
                                 </h2>
                             </div>
 
@@ -102,10 +104,10 @@ const HelpVideo = () => {
                                                     </button>
                                                 </div>
                                                 <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                                                    {userRole === "admin" ? "Admin" : "User"} Tutorial Video
+                                                    {userRole === "admin" ? t('trainingVideo.adminTutorial') : t('trainingVideo.userTutorial')}
                                                 </h3>
                                                 <p className="text-gray-600 mb-2">
-                                                    Click to play the help video
+                                                    {t('trainingVideo.clickToPlay')}
                                                 </p>
                                                 <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
                                                     {/* <span className="w-2 h-2 bg-red-500 rounded-full"></span> */}
@@ -139,53 +141,53 @@ const HelpVideo = () => {
                                 <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-6 border border-gray-200">
                                     <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                                         <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                                        What you'll learn in this video:
+                                        {t('trainingVideo.whatYouWillLearn')}
                                     </h3>
                                     <ul className="space-y-2 text-sm text-gray-700">
                                         {userRole === "admin" ? (
                                             <>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-blue-600 font-bold">•</span>
-                                                    <span>Managing user accounts and permissions</span>
+                                                    <span>{t('trainingVideo.learnAdmin1')}</span>
                                                 </li>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-blue-600 font-bold">•</span>
-                                                    <span>Creating and assigning tasks to team members</span>
+                                                    <span>{t('trainingVideo.learnAdmin2')}</span>
                                                 </li>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-blue-600 font-bold">•</span>
-                                                    <span>Monitoring system performance and analytics</span>
+                                                    <span>{t('trainingVideo.learnAdmin3')}</span>
                                                 </li>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-blue-600 font-bold">•</span>
-                                                    <span>Generating reports and data insights</span>
+                                                    <span>{t('trainingVideo.learnAdmin4')}</span>
                                                 </li>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-blue-600 font-bold">•</span>
-                                                    <span>System configuration and advanced settings</span>
+                                                    <span>{t('trainingVideo.learnAdmin5')}</span>
                                                 </li>
                                             </>
                                         ) : (
                                             <>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-green-600 font-bold">•</span>
-                                                    <span>Navigating the dashboard and main features</span>
+                                                    <span>{t('trainingVideo.learnUser1')}</span>
                                                 </li>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-green-600 font-bold">•</span>
-                                                    <span>Completing assigned tasks efficiently</span>
+                                                    <span>{t('trainingVideo.learnUser2')}</span>
                                                 </li>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-green-600 font-bold">•</span>
-                                                    <span>Using the checklist system effectively</span>
+                                                    <span>{t('trainingVideo.learnUser3')}</span>
                                                 </li>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-green-600 font-bold">•</span>
-                                                    <span>Updating task status and progress</span>
+                                                    <span>{t('trainingVideo.learnUser4')}</span>
                                                 </li>
                                                 <li className="flex items-start gap-2">
                                                     <span className="text-green-600 font-bold">•</span>
-                                                    <span>Accessing delegation features and tools</span>
+                                                    <span>{t('trainingVideo.learnUser5')}</span>
                                                 </li>
                                             </>
                                         )}

@@ -16,13 +16,13 @@
 //   useEffect(() => {
 //     const storedUsername = sessionStorage.getItem('username')
 //     const storedRole = sessionStorage.getItem('role')
-    
+
 //     if (!storedUsername) {
 //       // Redirect to login if not authenticated
 //       navigate("/login")
 //       return
 //     }
-  
+
 //     setUsername(storedUsername)
 //     setUserRole(storedRole || "user")
 //   }, [navigate])
@@ -142,7 +142,7 @@
 
 //   // Check if the current path is a data category page
 //   const isDataPage = location.pathname.includes("/dashboard/data/")
-  
+
 //   // If it's a data page, expand the submenu by default
 //   useEffect(() => {
 //     if (isDataPage && !isDataSubmenuOpen) {
@@ -420,7 +420,7 @@
 //     </div>
 //         </main>
 //       </div>
-      
+
 //     </div>
 //   )
 // }
@@ -446,11 +446,14 @@ import {
   CirclePlus,
   BookmarkCheck,
   UserRound,
+  Languages,
 } from "lucide-react"
+import { useTranslation } from "../../contexts/TranslationContext"
 
 export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const { t, language, toggleLanguage } = useTranslation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isDataSubmenuOpen, setIsDataSubmenuOpen] = useState(false)
   const [username, setUsername] = useState("")
@@ -479,7 +482,7 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
       sessionStorage.setItem("hasSeenWelcomeAnimation", "true")
 
       let currentIndex = 0
-      const welcomeText = `Welcome, ${storedUsername}`
+      const welcomeText = `${t('common.welcome')}, ${storedUsername}`
 
       const typingInterval = setInterval(() => {
         if (currentIndex <= welcomeText.length) {
@@ -496,14 +499,14 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
       return () => clearInterval(typingInterval)
     } else {
       // Show header text immediately without animation
-      setHeaderAnimatedText(`Welcome, ${storedUsername}`)
+      setHeaderAnimatedText(`${t('common.welcome')}, ${storedUsername}`)
     }
-  }, [navigate])
+  }, [navigate, t])
 
   // Header typing animation function
   function startHeaderAnimation(name) {
     let currentIndex = 0
-    const headerText = `Welcome, ${name}`
+    const headerText = `${t('common.welcome')}, ${name}`
     const headerInterval = setInterval(() => {
       if (currentIndex <= headerText.length) {
         setHeaderAnimatedText(headerText.slice(0, currentIndex))
@@ -516,35 +519,35 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
 
   // Same dataCategories as before (only "Checklist" active)
   const dataCategories = [
-    { id: "sales", name: "Checklist", link: "/dashboard/data/sales" },
+    { id: "sales", name: t('nav.checklist'), link: "/dashboard/data/sales" },
   ]
 
-  // Routes unchanged
+  // Routes with translations
   const routes = [
     {
       href: "/dashboard/admin",
-      label: "Dashboard",
+      label: t('nav.dashboard'),
       icon: Database,
       active: location.pathname === "/dashboard/admin",
       showFor: ["admin", "user"],
     },
     {
       href: "/dashboard/assign-task",
-      label: "Assign Task",
+      label: t('nav.assignTask'),
       icon: CheckSquare,
       active: location.pathname === "/dashboard/assign-task",
       showFor: ["admin"],
     },
     {
       href: "/dashboard/delegation",
-      label: "Delegation",
+      label: t('nav.delegation'),
       icon: ClipboardList,
       active: location.pathname === "/dashboard/delegation",
       showFor: ["admin", "user"],
     },
     {
       href: "#",
-      label: "Data",
+      label: t('nav.data'),
       icon: Database,
       active: location.pathname.includes("/dashboard/data"),
       submenu: true,
@@ -552,21 +555,21 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
     },
     {
       href: "/dashboard/calendar",
-      label: "Calendar",
+      label: t('nav.calendar'),
       icon: Calendar,
       active: location.pathname === "/dashboard/calendar",
       showFor: ["admin", "user"],
     },
     {
       href: "/dashboard/license",
-      label: "License",
+      label: t('nav.license'),
       icon: KeyRound,
       active: location.pathname === "/dashboard/license",
       showFor: ["admin", "user"],
     },
     {
       href: "/dashboard/traning-video",
-      label: "Training Video",
+      label: t('nav.trainingVideo'),
       icon: Video,
       active: location.pathname === "/dashboard/traning-video",
       showFor: ["admin", "user"],
@@ -605,11 +608,22 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
     <div className={`flex h-screen overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50`}>
       {/* Sidebar for desktop */}
       <aside className="hidden w-64 flex-shrink-0 border-r border-blue-200 bg-white md:flex md:flex-col">
-        <div className="flex h-14 items-center border-b border-blue-200 px-4 bg-gradient-to-r from-blue-100 to-purple-100">
+        <div className="flex h-14 items-center justify-between border-b border-blue-200 px-4 bg-gradient-to-r from-blue-100 to-purple-100">
           <Link to="/dashboard/admin" className="flex items-center gap-2 font-semibold text-blue-700">
             <ClipboardList className="h-5 w-5 text-blue-600" />
-            <span>Checklist & Delegation</span>
+            <span>{t('login.title')}</span>
           </Link>
+          <button
+            onClick={toggleLanguage}
+            className="text-blue-700 hover:text-blue-900 p-1 rounded-full hover:bg-blue-100 relative group"
+            title={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
+          >
+            <Languages className="h-4 w-4" />
+            <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-purple-600 text-white rounded-full w-3 h-3 flex items-center justify-center">
+              {language === 'en' ? 'EN' : 'HI'}
+            </span>
+            <span className="sr-only">{t('common.selectLanguage')}</span>
+          </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-2">
           <ul className="space-y-1">
@@ -619,11 +633,10 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
                   <div>
                     <button
                       onClick={() => setIsDataSubmenuOpen(!isDataSubmenuOpen)}
-                      className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                        route.active
-                          ? "bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700"
-                          : "text-gray-700 hover:bg-blue-50"
-                      }`}
+                      className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${route.active
+                        ? "bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700"
+                        : "text-gray-700 hover:bg-blue-50"
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <route.icon className={`h-4 w-4 ${route.active ? "text-blue-600" : ""}`} />
@@ -637,11 +650,10 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
                           <li key={category.id}>
                             <Link
                               to={category.link || `/dashboard/data/${category.id}`}
-                              className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                                location.pathname === (category.link || `/dashboard/data/${category.id}`)
-                                  ? "bg-blue-50 text-blue-700 font-medium"
-                                  : "text-gray-600 hover:bg-blue-50 hover:text-blue-700 "
-                              }`}
+                              className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${location.pathname === (category.link || `/dashboard/data/${category.id}`)
+                                ? "bg-blue-50 text-blue-700 font-medium"
+                                : "text-gray-600 hover:bg-blue-50 hover:text-blue-700 "
+                                }`}
                               onClick={() => setIsMobileMenuOpen(false)}
                             >
                               {category.name}
@@ -654,9 +666,8 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
                 ) : (
                   <Link
                     to={route.href}
-                    className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      route.active ? "bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700" : "text-gray-700 hover:bg-blue-50"
-                    }`}
+                    className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${route.active ? "bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700" : "text-gray-700 hover:bg-blue-50"
+                      }`}
                   >
                     <route.icon className={`h-4 w-4 ${route.active ? "text-blue-600" : ""}`} />
                     {route.label}
@@ -712,7 +723,7 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
                 className="text-blue-700 hover:text-blue-900 p-1 rounded-full hover:bg-blue-100"
               >
                 <LogOut className="h-4 w-4" />
-                <span className="sr-only">Log out</span>
+                <span className="sr-only">{t('common.logout')}</span>
               </button>
             </div>
           </div>
@@ -733,15 +744,26 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="fixed inset-0 bg-black/20" onClick={() => setIsMobileMenuOpen(false)}></div>
           <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-lg">
-            <div className="flex h-14 items-center border-b border-blue-200 px-4 bg-gradient-to-r from-blue-100 to-purple-100">
+            <div className="flex h-14 items-center justify-between border-b border-blue-200 px-4 bg-gradient-to-r from-blue-100 to-purple-100">
               <Link
                 to="/dashboard/admin"
                 className="flex items-center gap-2 font-semibold text-blue-700"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <ClipboardList className="h-5 w-5 text-blue-600" />
-                <span>Checklist & Delegation</span>
+                <span>{t('login.title')}</span>
               </Link>
+              <button
+                onClick={toggleLanguage}
+                className="text-blue-700 hover:text-blue-900 p-1 rounded-full hover:bg-blue-100 relative group"
+                title={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
+              >
+                <Languages className="h-4 w-4" />
+                <span className="absolute -top-1 -right-1 text-[8px] font-bold bg-purple-600 text-white rounded-full w-3 h-3 flex items-center justify-center">
+                  {language === 'en' ? 'EN' : 'HI'}
+                </span>
+                <span className="sr-only">{t('common.selectLanguage')}</span>
+              </button>
             </div>
             <nav className="flex-1 overflow-y-auto p-2 bg-white">
               <ul className="space-y-1">
@@ -751,11 +773,10 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
                       <div>
                         <button
                           onClick={() => setIsDataSubmenuOpen(!isDataSubmenuOpen)}
-                          className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                            route.active
-                              ? "bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700"
-                              : "text-gray-700 hover:bg-blue-50"
-                          }`}
+                          className={`flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${route.active
+                            ? "bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700"
+                            : "text-gray-700 hover:bg-blue-50"
+                            }`}
                         >
                           <div className="flex items-center gap-3">
                             <route.icon className={`h-4 w-4 ${route.active ? "text-blue-600" : ""}`} />
@@ -769,11 +790,10 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
                               <li key={category.id}>
                                 <Link
                                   to={category.link || `/dashboard/data/${category.id}`}
-                                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                                    location.pathname === (category.link || `/dashboard/data/${category.id}`)
-                                      ? "bg-blue-50 text-blue-700 font-medium"
-                                      : "text-gray-600 hover:bg-blue-50 hover:text-blue-700"
-                                  }`}
+                                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${location.pathname === (category.link || `/dashboard/data/${category.id}`)
+                                    ? "bg-blue-50 text-blue-700 font-medium"
+                                    : "text-gray-600 hover:bg-blue-50 hover:text-blue-700"
+                                    }`}
                                   onClick={() => setIsMobileMenuOpen(false)}
                                 >
                                   {category.name}
@@ -786,9 +806,8 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
                     ) : (
                       <Link
                         to={route.href}
-                        className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                          route.active ? "bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700" : "text-gray-700 hover:bg-blue-50"
-                        }`}
+                        className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${route.active ? "bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700" : "text-gray-700 hover:bg-blue-50"
+                          }`}
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         <route.icon className={`h-4 w-4 ${route.active ? "text-blue-600" : ""}`} />
@@ -845,7 +864,7 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
                     className="text-blue-700 hover:text-blue-900 p-1 rounded-full hover:bg-blue-100 "
                   >
                     <LogOut className="h-4 w-4" />
-                    <span className="sr-only">Log out</span>
+                    <span className="sr-only">{t('common.logout')}</span>
                   </button>
                 </div>
               </div>
@@ -856,92 +875,89 @@ export default function AdminLayout({ children, darkMode, toggleDarkMode }) {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-       <header className="flex h-16 items-center justify-between border-b-2 border-blue-200 bg-gradient-to-r from-blue-50 via-purple-50 to-blue-50 px-4 md:px-6 shadow-md">
-  <div className="flex md:hidden w-8"></div>
-  <div className="flex flex-col gap-1">
-   
-    {headerAnimatedText && (
-      <div className="relative">
-        <p className="text-lg md:text-xl font-['Poppins',_'Segoe_UI',_sans-serif] tracking-wide">
-          <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 animate-gradient">
-            {headerAnimatedText}
-          </span>
-          <span className="inline-block animate-bounce ml-2 text-yellow-500">👋</span>
-        </p>
-      </div>
-    )}
-  </div>
-</header>
+        <header className="flex h-16 items-center justify-between border-b-2 border-blue-200 bg-gradient-to-r from-blue-50 via-purple-50 to-blue-50 px-4 md:px-6 shadow-md">
+          <div className="flex md:hidden w-8"></div>
+          <div className="flex flex-col gap-1">
+
+            {headerAnimatedText && (
+              <div className="relative">
+                <p className="text-lg md:text-xl font-['Poppins',_'Segoe_UI',_sans-serif] tracking-wide">
+                  <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 animate-gradient">
+                    {headerAnimatedText}
+                  </span>
+                  <span className="inline-block animate-bounce ml-2 text-yellow-500">👋</span>
+                </p>
+              </div>
+            )}
+          </div>
+        </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gradient-to-br from-blue-50 to-purple-50 pb-20">
           {children}
 
-        {/* Mobile footer tab navigation - role based */}
-<div className="fixed bottom-8 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg backdrop-blur-sm sm:hidden flex justify-around items-center gap-4 py-2">
-  {/* Dashboard tab shown for all users*/}
-  <Link
-    to="/dashboard/admin"
-    className={`p-2 rounded-full hover:bg-white/20 transition-all duration-300 ${
-      location.pathname === "/dashboard/admin" ? "bg-white/20" : ""
-    }`}
-    aria-label="Dashboard"
-  >
-    <Home className="w-6 h-6 drop-shadow-md" />
-  </Link>
+          {/* Mobile footer tab navigation - role based */}
+          <div className="fixed bottom-8 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg backdrop-blur-sm sm:hidden flex justify-around items-center gap-4 py-2">
+            {/* Dashboard tab shown for all users*/}
+            <Link
+              to="/dashboard/admin"
+              className={`p-2 rounded-full hover:bg-white/20 transition-all duration-300 ${location.pathname === "/dashboard/admin" ? "bg-white/20" : ""
+                }`}
+              aria-label="Dashboard"
+            >
+              <Home className="w-6 h-6 drop-shadow-md" />
+            </Link>
 
-  {/* Checklist - both roles */}
-  <Link
-    to="/dashboard/data/sales"
-    className={`p-2 rounded-full hover:bg-white/20 transition-all duration-300 ${
-      location.pathname === "/dashboard/data/sales" ? "bg-white/20" : ""
-    }`}
-    aria-label="Checklist"
-  >
-    <CalendarCheck className="w-6 h-6 drop-shadow-md" />
-  </Link>
-  
-  {/* Assign Task - admin only */}
-  {userRole === "admin" && (
-    <Link
-      to="/dashboard/assign-task"
-      className="p-3 rounded-full bg-white text-purple-600 hover:bg-purple-100 transition-all duration-300 transform hover:scale-110 shadow-lg"
-      aria-label="Assign Task"
-    >
-      <CirclePlus className="w-7 h-7 drop-shadow-md" />
-    </Link>
-  )}
-  
-  {/* Delegation - both roles */}
-  <Link
-    to="/dashboard/delegation"
-    className={`p-2 rounded-full hover:bg-white/20 transition-all duration-300 ${
-      location.pathname === "/dashboard/delegation" ? "bg-white/20" : ""
-    }`}
-    aria-label="Delegation"
-  >
-    <BookmarkCheck className="w-6 h-6 drop-shadow-md" />
-  </Link>
-  
-  {/* Profile popup trigger */}
-  <div
-    className="p-2 rounded-full hover:bg-white/20 transition-all duration-300 cursor-pointer"
-    onClick={() => alert("User Profile popup can open here")}
-    aria-label="Profile"
-  >
-    <UserRound className="w-6 h-6 drop-shadow-md" />
-  </div>
-</div>
+            {/* Checklist - both roles */}
+            <Link
+              to="/dashboard/data/sales"
+              className={`p-2 rounded-full hover:bg-white/20 transition-all duration-300 ${location.pathname === "/dashboard/data/sales" ? "bg-white/20" : ""
+                }`}
+              aria-label="Checklist"
+            >
+              <CalendarCheck className="w-6 h-6 drop-shadow-md" />
+            </Link>
 
-{/* Powered by Botivate fixed below mobile tabs */}
-<div className="fixed bottom-0 left-0 right-0 z-50 py-1 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center text-sm shadow-md sm:hidden">
-  <a
-    href="https://www.botivate.in/"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="hover:underline"
-  >
-    Powered by-<span className="font-semibold">Botivate</span>
-  </a>
-</div>
+            {/* Assign Task - admin only */}
+            {userRole === "admin" && (
+              <Link
+                to="/dashboard/assign-task"
+                className="p-3 rounded-full bg-white text-purple-600 hover:bg-purple-100 transition-all duration-300 transform hover:scale-110 shadow-lg"
+                aria-label="Assign Task"
+              >
+                <CirclePlus className="w-7 h-7 drop-shadow-md" />
+              </Link>
+            )}
+
+            {/* Delegation - both roles */}
+            <Link
+              to="/dashboard/delegation"
+              className={`p-2 rounded-full hover:bg-white/20 transition-all duration-300 ${location.pathname === "/dashboard/delegation" ? "bg-white/20" : ""
+                }`}
+              aria-label="Delegation"
+            >
+              <BookmarkCheck className="w-6 h-6 drop-shadow-md" />
+            </Link>
+
+            {/* Profile popup trigger */}
+            <div
+              className="p-2 rounded-full hover:bg-white/20 transition-all duration-300 cursor-pointer"
+              onClick={() => alert("User Profile popup can open here")}
+              aria-label="Profile"
+            >
+              <UserRound className="w-6 h-6 drop-shadow-md" />
+            </div>
+          </div>
+
+          {/* Powered by Botivate fixed below mobile tabs */}
+          <div className="fixed bottom-0 left-0 right-0 z-50 py-1 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center text-sm shadow-md sm:hidden">
+            <a
+              href="https://www.botivate.in/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              Powered by-<span className="font-semibold">Botivate</span>
+            </a>
+          </div>
 
         </main>
       </div>

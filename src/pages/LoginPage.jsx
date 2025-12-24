@@ -300,13 +300,13 @@
 // export default LoginPage
 
 
-"use client";
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "../contexts/TranslationContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [isLoginLoading, setIsLoginLoading] = useState(false);
   const [masterData, setMasterData] = useState({
@@ -427,17 +427,17 @@ const LoginPage = () => {
             navigate(isAdmin ? "/dashboard/admin" : "/dashboard/delegation");
           }, 2000);
 
-          setToast({ show: true, message: `Login successful. Welcome, ${trimmedUsername}!`, type: "success" });
+          setToast({ show: true, message: `${t('common.success')}: Welcome, ${trimmedUsername}!`, type: "success" });
           return;
         } else {
-          setToast({ show: true, message: "Username or password is incorrect. Please try again.", type: "error" });
+          setToast({ show: true, message: t('login.errorInvalid'), type: "error" });
         }
       } else {
-        setToast({ show: true, message: "Username or password is incorrect. Please try again.", type: "error" });
+        setToast({ show: true, message: t('login.errorInvalid'), type: "error" });
       }
     } catch (error) {
       console.error("Login Error:", error);
-      setToast({ show: true, message: `Login failed: ${error.message}. Please try again.`, type: "error" });
+      setToast({ show: true, message: `${t('login.errorInvalid')}: ${error.message}`, type: "error" });
     } finally {
       setIsLoginLoading(false);
     }
@@ -449,22 +449,22 @@ const LoginPage = () => {
         <div className="space-y-1 p-4 bg-gradient-to-r from-blue-100 to-purple-100 rounded-t-lg">
           <div className="flex items-center justify-center mb-2">
             <i className="fas fa-clipboard-list h-8 w-8 text-blue-600 mr-2"></i>
-            <h2 className="text-2xl font-bold text-blue-700">Checklist & Delegation</h2>
+            <h2 className="text-2xl font-bold text-blue-700">{t('login.title')}</h2>
           </div>
-          <p className="text-center text-blue-600">Login to access your tasks and delegations</p>
+          <p className="text-center text-blue-600">{t('login.subtitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div className="space-y-2">
             <label htmlFor="username" className="flex items-center text-blue-700">
               <i className="fas fa-user h-4 w-4 mr-2"></i>
-              Username
+              {t('login.username')}
             </label>
             <input
               id="username"
               name="username"
               type="text"
-              placeholder="Enter your username"
+              placeholder={t('form.enterValue')}
               required
               value={formData.username}
               onChange={handleChange}
@@ -475,13 +475,13 @@ const LoginPage = () => {
           <div className="space-y-2">
             <label htmlFor="password" className="flex items-center text-blue-700">
               <i className="fas fa-key h-4 w-4 mr-2"></i>
-              Password
+              {t('login.password')}
             </label>
             <input
               id="password"
               name="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder={t('form.enterValue')}
               required
               value={formData.password}
               onChange={handleChange}
@@ -495,24 +495,23 @@ const LoginPage = () => {
               className="w-full py-2 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md font-medium disabled:opacity-50"
               disabled={isLoginLoading || isDataLoading}
             >
-              {isLoginLoading ? "Logging in..." : isDataLoading ? "Loading..." : "Login"}
+              {isLoginLoading ? t('login.loggingIn') : isDataLoading ? t('common.loading') : t('login.loginButton')}
             </button>
           </div>
         </form>
         <div className="fixed left-0 right-0 bottom-0 py-1 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center text-sm shadow-md z-10">
           <a href="https://www.botivate.in/" target="_blank" rel="noopener noreferrer" className="hover:underline">
-            Powered by-<span className="font-semibold">Botivate</span>
+            {t('common.poweredBy')}-<span className="font-semibold">Botivate</span>
           </a>
         </div>
 
         {/* Toast Notification */}
         {toast.show && (
           <div
-            className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 ${
-              toast.type === "success"
+            className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg transition-all duration-300 ${toast.type === "success"
                 ? "bg-green-100 text-green-800 border-l-4 border-green-500"
                 : "bg-red-100 text-red-800 border-l-4 border-red-500"
-            }`}
+              }`}
           >
             {toast.message}
           </div>
@@ -533,12 +532,11 @@ const LoginPage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="mt-3 text-lg font-medium text-gray-900">Login Successful!</h3>
+                <h3 className="mt-3 text-lg font-medium text-gray-900">{t('login.welcomeBack')}</h3>
                 <div className="mt-2 px-4 py-3">
                   <p className="text-xl text-gray-600">
-                    Welcome{" "}
-                    <span className="font-semibold text-blue-600">{formData.username.trim().toLowerCase()}</span>, you have
-                    successfully logged in.
+                    {t('common.welcome')}{" "}
+                    <span className="font-semibold text-blue-600">{formData.username.trim().toLowerCase()}</span>, {t('login.welcomeBack')}
                   </p>
                 </div>
                 <div className="mt-4">
@@ -546,7 +544,7 @@ const LoginPage = () => {
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    Redirecting to {masterData.userRoles[formData.username.trim().toLowerCase()] === "admin" ? "Dashboard..." : "Delegation..."}
+                    {t('common.loading')}...
                   </p>
                 </div>
               </div>

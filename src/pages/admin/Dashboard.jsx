@@ -1,8 +1,7 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { BarChart3, CheckCircle2, Clock, ListTodo, Users, AlertTriangle, Filter, X, Search } from 'lucide-react'
 import AdminLayout from "../../components/layout/AdminLayout.jsx"
+import { useTranslation } from "../../contexts/TranslationContext"
 import {
   BarChart,
   Bar,
@@ -18,6 +17,7 @@ import {
 } from "recharts"
 
 export default function AdminDashboard() {
+  const { t } = useTranslation()
   const [dashboardType, setDashboardType] = useState("checklist")
   const [taskView, setTaskView] = useState("recent")
   const [filterStatus, setFilterStatus] = useState("all")
@@ -61,7 +61,7 @@ export default function AdminDashboard() {
     completionRate: 0
   });
 
-   const [popupOpen, setPopupOpen] = useState(false)
+  const [popupOpen, setPopupOpen] = useState(false)
   const [popupData, setPopupData] = useState([])
   const [popupType, setPopupType] = useState("")
   const [popupFilters, setPopupFilters] = useState({
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
   const handleCardClick = (type) => {
     setPopupType(type)
     let filteredTasks = []
-    switch(type) {
+    switch (type) {
       case "total":
         filteredTasks = departmentData.allTasks || []
         break
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
       } else {
         // Task is not completed
         pendingTasks++; // All incomplete tasks count as pending
-       
+
         if (task.status === 'overdue') {
           overdueTasks++; // Only past dates (excluding today) count as overdue
         }
@@ -329,7 +329,7 @@ export default function AdminDashboard() {
     try {
       // Debug: Log which sheet we're fetching
       // console.log(`Fetching data for dashboard type: ${dashboardType}, sheet: ${sheetName}`);
-     
+
       const response = await fetch(`https://docs.google.com/spreadsheets/d/101zBKPpsMtmBi36uCULsJoUgj_q7-0m1pjIXY5zmbP8/gviz/tq?tqx=out:json&sheet=${sheetName}`);
 
       if (!response.ok) {
@@ -429,15 +429,15 @@ export default function AdminDashboard() {
 
         // Check column B for valid task row - "Task ID"
         const taskId = getCellValue(row, 1); // Column B (index 1)
-       
+
         // Debug: Log task ID for first few rows
         if (rowIndex <= 5) {
           console.log(`Row ${rowIndex + 1}: taskId="${taskId}" (type: ${typeof taskId})`);
         }
-       
+
         // More lenient validation - allow any non-empty value as task ID
         if (taskId === null || taskId === undefined || taskId === '' ||
-            (typeof taskId === 'string' && taskId.trim() === '')) {
+          (typeof taskId === 'string' && taskId.trim() === '')) {
           if (rowIndex <= 5) console.log(`Row ${rowIndex + 1}: Skipped due to empty/null task ID`);
           return null;
         }
@@ -458,18 +458,18 @@ export default function AdminDashboard() {
         if (dashboardType === "delegation") {
           // For DELEGATION mode: Process ALL tasks with valid task IDs, no date filtering
           if (!taskId || taskId === null || taskId === undefined || taskId === '' ||
-              (typeof taskId === 'string' && taskId.trim() === '')) {
+            (typeof taskId === 'string' && taskId.trim() === '')) {
             if (rowIndex <= 5) console.log(`Row ${rowIndex + 1}: Skipped due to invalid task ID in delegation mode`);
             return null;
           }
         } else {
           // For CHECKLIST mode: Keep existing date filtering logic
           const taskStartDateObj = parseDateFromDDMMYYYY(taskStartDate);
-          
+
           if (rowIndex <= 5) {
             console.log(`Row ${rowIndex + 1}: taskStartDateObj=${taskStartDateObj}, today=${today}, tomorrow=${tomorrow}, isValid=${!!taskStartDateObj}`);
           }
-          
+
           // Process tasks that have a valid start date and are due up to tomorrow (include tomorrow's tasks)
           if (!taskStartDateObj || taskStartDateObj > tomorrow) {
             if (rowIndex <= 5) console.log(`Row ${rowIndex + 1}: Skipped due to invalid/far future date (beyond tomorrow)`);
@@ -486,7 +486,7 @@ export default function AdminDashboard() {
           // For checklist: Column K (index 10) - "Actual"
           completionDateValue = getCellValue(row, 10);
         }
-       
+
         completionDate = completionDateValue ? parseGoogleSheetsDate(String(completionDateValue)) : '';
 
         // Debug: Log completion date for first few rows
@@ -508,12 +508,12 @@ export default function AdminDashboard() {
         // Get additional task details
         const taskDescription = getCellValue(row, 5) || 'Untitled Task'; // Column F - "Task Description"
         const frequency = getCellValue(row, 7) || 'one-time'; // Column H - "Freq"
-       const department = getCellValue(row, 2) || 'Unassigned';
-       console.log('Row dept:', getCellValue(row, 3), 'at row', rowIndex);
+        const department = getCellValue(row, 2) || 'Unassigned';
+        console.log('Row dept:', getCellValue(row, 3), 'at row', rowIndex);
 
         // UPDATED: Determine task status for display purposes - restored overdue logic for delegation
         let status = 'pending';
-       
+
         if (completionDate && completionDate !== '') {
           status = 'completed';
         } else if (isDateInPast(taskStartDate) && !isDateToday(taskStartDate)) {
@@ -529,20 +529,20 @@ export default function AdminDashboard() {
           console.log(`Row ${rowIndex + 1}: status="${status}", completionDate="${completionDate}", dashboardType="${dashboardType}"`);
         }
 
-      const taskObj = {
-  id: taskIdStr,
-  title: taskDescription,
-  department: department || 'Unassigned', // ensure it has value
-  assignedTo,
-  taskStartDate,
-  dueDate: taskStartDate,
-  status,
-  frequency
-};
+        const taskObj = {
+          id: taskIdStr,
+          title: taskDescription,
+          department: department || 'Unassigned', // ensure it has value
+          assignedTo,
+          taskStartDate,
+          dueDate: taskStartDate,
+          status,
+          frequency
+        };
 
-      if (rowIndex <= 5) {
-  console.log(`Row ${rowIndex + 1} - All cells:`, row.c ? row.c.map((cell, idx) => `Col${idx}: ${cell?.v}`) : 'No cells');
-}
+        if (rowIndex <= 5) {
+          console.log(`Row ${rowIndex + 1} - All cells:`, row.c ? row.c.map((cell, idx) => `Col${idx}: ${cell?.v}`) : 'No cells');
+        }
 
         // Update staff member totals
         const staffData = staffTrackingMap.get(assignedTo);
@@ -579,13 +579,13 @@ export default function AdminDashboard() {
           } else {
             // Task is not completed - apply counting logic for both modes
             staffData.pendingTasks++;
-           
+
             if (isDateInPast(taskStartDate) && !isDateToday(taskStartDate)) {
               // Past dates (excluding today) = overdue
               overdueTasks++;
               statusData.Overdue++;
             }
-           
+
             // All incomplete tasks (including overdue + today) = pending
             pendingTasks++;
             statusData.Pending++;
@@ -600,7 +600,7 @@ export default function AdminDashboard() {
           // For CHECKLIST mode: Keep existing logic with date restrictions
           const taskStartDateObj = parseDateFromDDMMYYYY(taskStartDate);
           const shouldCountInStats = taskStartDateObj <= today;
-          
+
           if (shouldCountInStats) {
             totalTasks++;
 
@@ -619,13 +619,13 @@ export default function AdminDashboard() {
               }
             } else {
               staffData.pendingTasks++;
-             
+
               if (isDateInPast(taskStartDate) && !isDateToday(taskStartDate)) {
                 // Past dates (excluding today) = overdue
                 overdueTasks++;
                 statusData.Overdue++;
               }
-             
+
               // All incomplete tasks (including overdue + today) = pending
               pendingTasks++;
               statusData.Pending++;
@@ -863,16 +863,16 @@ export default function AdminDashboard() {
 
   const StaffTasksTable = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
+
     useEffect(() => {
       const handleResize = () => {
         setIsMobile(window.innerWidth < 768);
       };
-  
+
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
     }, []);
-  
+
     if (isMobile) {
       return (
         <div className="space-y-4">
@@ -885,32 +885,32 @@ export default function AdminDashboard() {
                   <div className="text-sm text-gray-500">{staff.email}</div>
                 </div>
                 <div className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                  {staff.progress >= 80 ? 'Excellent' : staff.progress >= 60 ? 'Good' : 'Needs Improvement'}
+                  {staff.progress >= 80 ? t('dashboard.excellent') : staff.progress >= 60 ? t('dashboard.good') : t('dashboard.needsImprovement')}
                 </div>
               </div>
-  
+
               {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="text-center p-3 bg-gray-50 rounded-lg">
                   <div className="text-2xl font-bold text-gray-900">{staff.totalTasks}</div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">Total Tasks</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">{t('dashboard.totalTasks')}</div>
                 </div>
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600">{staff.completedTasks}</div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">Completed</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">{t('assignTask.completed')}</div>
                 </div>
                 <div className="text-center p-3 bg-orange-50 rounded-lg">
                   <div className="text-2xl font-bold text-orange-600">{staff.pendingTasks}</div>
-                  <div className="text-xs text-gray-500 uppercase tracking-wider">Pending</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">{t('assignTask.pending')}</div>
                 </div>
               </div>
-  
+
               {/* Progress Bar */}
               <div className="flex items-center gap-3">
                 <div className="flex-1">
                   <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
-                      className="bg-blue-600 h-3 rounded-full transition-all duration-300" 
+                    <div
+                      className="bg-blue-600 h-3 rounded-full transition-all duration-300"
                       style={{ width: `${staff.progress}%` }}
                     />
                   </div>
@@ -924,7 +924,7 @@ export default function AdminDashboard() {
         </div>
       );
     }
-  
+
     // Desktop table view (unchanged)
     return (
       <div className="rounded-md border border-gray-200 overflow-x-auto">
@@ -932,22 +932,22 @@ export default function AdminDashboard() {
           <thead className="bg-gray-50">
             <tr>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
+                {t('table.name')}
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total Tasks
+                {t('dashboard.totalTasks')}
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Completed
+                {t('assignTask.completed')}
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Pending
+                {t('assignTask.pending')}
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Progress
+                {t('table.progress')}
               </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                {t('table.status')}
               </th>
             </tr>
           </thead>
@@ -974,15 +974,15 @@ export default function AdminDashboard() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   {staff.progress >= 80 ? (
                     <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      Excellent
+                      {t('dashboard.excellent')}
                     </span>
                   ) : staff.progress >= 60 ? (
                     <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                      Good
+                      {t('dashboard.good')}
                     </span>
                   ) : (
                     <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                      Needs Improvement
+                      {t('dashboard.needsImprovement')}
                     </span>
                   )}
                 </td>
@@ -998,7 +998,7 @@ export default function AdminDashboard() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <h1 className="text-2xl font-bold tracking-tight text-purple-500">Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-purple-500">{t('dashboard.title')}</h1>
           <div className="flex items-center gap-2">
             {/* Dashboard Type Selection */}
             <select
@@ -1014,48 +1014,48 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div onClick={() => handleCardClick("total")} className="cursor-pointer rounded-lg border border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-all bg-white">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-blue-50 to-blue-100 rounded-tr-lg p-4">
-              <h3 className="text-sm font-medium text-blue-700">Total Tasks</h3>
+              <h3 className="text-sm font-medium text-blue-700">{t('dashboard.totalTasks')}</h3>
               <ListTodo className="h-4 w-4 text-blue-500" />
             </div>
             <div className="p-4">
               <div className="text-3xl font-bold text-blue-700">{departmentData.totalTasks}</div>
-              <p className="text-xs text-blue-600">Total tasks in checklist (up to today)</p>
+              <p className="text-xs text-blue-600">{t('dashboard.totalTasksDescription')}</p>
             </div>
           </div>
 
           <div onClick={() => handleCardClick("completed")} className="cursor-pointer rounded-lg border border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-all bg-white">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-green-50 to-green-100 rounded-tr-lg p-4">
-              <h3 className="text-sm font-medium text-green-700">Completed Tasks</h3>
+              <h3 className="text-sm font-medium text-green-700">{t('dashboard.completedTasks')}</h3>
               <CheckCircle2 className="h-4 w-4 text-green-500" />
             </div>
             <div className="p-4">
               <div className="text-3xl font-bold text-green-700">{departmentData.completedTasks}</div>
-              <p className="text-xs text-green-600">Total completed till date</p>
+              <p className="text-xs text-green-600">{t('common.success')}</p>
             </div>
           </div>
 
           <div onClick={() => handleCardClick("pending")} className="cursor-pointer rounded-lg border border-l-4 border-l-amber-500 shadow-md hover:shadow-lg transition-all bg-white">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-amber-50 to-amber-100 rounded-tr-lg p-4">
-              <h3 className="text-sm font-medium text-amber-700">Pending Tasks</h3>
+              <h3 className="text-sm font-medium text-amber-700">{t('dashboard.pendingTasks')}</h3>
               <Clock className="h-4 w-4 text-amber-500" />
             </div>
             <div className="p-4">
               <div className="text-3xl font-bold text-amber-700">{departmentData.pendingTasks}</div>
-              <p className="text-xs text-amber-600">Including today + overdue</p>
+              <p className="text-xs text-amber-600">{t('assignTask.pending')}</p>
             </div>
           </div>
 
           <div onClick={() => handleCardClick("overdue")} className="cursor-pointer rounded-lg border border-l-4 border-l-red-500 shadow-md hover:shadow-lg transition-all bg-white">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-red-50 to-red-100 rounded-tr-lg p-4">
-              <h3 className="text-sm font-medium text-red-700">Overdue Tasks</h3>
+              <h3 className="text-sm font-medium text-red-700">{t('dashboard.overdueTasks')}</h3>
               <AlertTriangle className="h-4 w-4 text-red-500" />
             </div>
             <div className="p-4">
               <div className="text-3xl font-bold text-red-700">{departmentData.overdueTasks}</div>
-              <p className="text-xs text-red-600">Past due (excluding today)</p>
+              <p className="text-xs text-red-600">{t('common.error')}</p>
             </div>
           </div>
         </div>
@@ -1069,21 +1069,21 @@ export default function AdminDashboard() {
                 }`}
               onClick={() => setTaskView("recent")}
             >
-              {dashboardType === "delegation" ? "Today Tasks" : "Recent Tasks"}
+              {dashboardType === "delegation" ? t('calendar.today') : t('dashboard.recentActivity')}
             </button>
             <button
               className={`py-3 text-center font-medium transition-colors ${taskView === "upcoming" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               onClick={() => setTaskView("upcoming")}
             >
-              {dashboardType === "delegation" ? "Future Tasks" : "Upcoming Tasks"}
+              {dashboardType === "delegation" ? t('calendar.agenda') : t('calendar.agenda')}
             </button>
             <button
               className={`py-3 text-center font-medium transition-colors ${taskView === "overdue" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               onClick={() => setTaskView("overdue")}
             >
-              Overdue Tasks
+              {t('dashboard.overdueTasks')}
             </button>
           </div>
 
@@ -1092,11 +1092,11 @@ export default function AdminDashboard() {
               <div className="flex-1 space-y-2">
                 <label htmlFor="search" className="flex items-center text-purple-700">
                   <Filter className="h-4 w-4 mr-2" />
-                  Search Tasks
+                  {t('common.search')}
                 </label>
                 <input
                   id="search"
-                  placeholder="Search by task title or ID"
+                  placeholder={t('dataPage.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-md border border-purple-200 p-2 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
@@ -1105,7 +1105,7 @@ export default function AdminDashboard() {
               <div className="space-y-2 md:w-[180px]">
                 <label htmlFor="staff-filter" className="flex items-center text-purple-700">
                   <Filter className="h-4 w-4 mr-2" />
-                  Filter by Staff
+                  {t('dataPage.filterBy')}
                 </label>
                 <select
                   id="staff-filter"
@@ -1113,7 +1113,7 @@ export default function AdminDashboard() {
                   onChange={(e) => setFilterStaff(e.target.value)}
                   className="w-full rounded-md border border-purple-200 p-2 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                 >
-                  <option value="all">All Staff</option>
+                  <option value="all">{t('calendar.allNames')}</option>
                   {departmentData.staffMembers.map((staff) => (
                     <option key={staff.id} value={staff.name}>
                       {staff.name}
@@ -1124,106 +1124,109 @@ export default function AdminDashboard() {
             </div>
 
             {getTasksByView(taskView).length === 0 ? (
-  <div className="text-center p-8 text-gray-500">
-    <p>No tasks found matching your filters.</p>
-  </div>
-) : (
-  <>
-    {/* Mobile: cards */}
-    <div className="grid grid-cols-1 gap-3 md:hidden" style={{ maxHeight: "400px", overflowY: "auto" }}>
-      {getTasksByView(taskView).map((task) => (
-        <div
-          key={task.id}
-          className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
-        >
-          {/* Top row: ID + frequency pill */}
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-gray-500">
-              #{task.id}
-            </span>
-            <span
-              className={`px-2 py-1 rounded-full text-[11px] font-medium ${getFrequencyColor(
-                task.frequency
-              )}`}
-            >
-              {task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1)}
-            </span>
-          </div>
+              <div className="text-center p-8 text-gray-500">
+                <p>{t('common.noTasksFound')}</p>
+              </div>
+            ) : (
+              <>
+                {/* Mobile: cards */}
+                <div className="grid grid-cols-1 gap-3 md:hidden" style={{ maxHeight: "400px", overflowY: "auto" }}>
+                  {getTasksByView(taskView).map((task) => (
+                    <div
+                      key={task.id}
+                      className="border border-gray-200 rounded-lg p-3 bg-white shadow-sm"
+                    >
+                      {/* Top row: ID + frequency pill */}
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-gray-500">
+                          #{task.id}
+                        </span>
+                        <span
+                          className={`px-2 py-1 rounded-full text-[11px] font-medium ${getFrequencyColor(
+                            task.frequency
+                          )}`}
+                        >
+                          {task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1)}
+                        </span>
+                      </div>
 
-          {/* Title / description */}
-          <p className="text-sm font-medium text-gray-900 mb-2">
-            {task.title}
-          </p>
+                      {/* Title / description */}
+                      <p className="text-sm font-medium text-gray-900 mb-2">
+                        {task.title}
+                      </p>
 
-          {/* Meta info */}
-          <div className="space-y-1 text-xs text-gray-600">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-gray-700">Assigned to:</span>
-              <span>{task.assignedTo}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-gray-700">Start date:</span>
-              <span>{task.taskStartDate}</span>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
+                      {/* Meta info */}
+                      <div className="space-y-1 text-xs text-gray-600">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-gray-700">{t('assignTask.assignTo')}:</span>
+                          <span>{task.assignedTo}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-gray-700">{t('assignTask.startDate')}:</span>
+                          <span>{task.taskStartDate}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-    {/* Desktop: table */}
-    <div className="hidden md:block overflow-x-auto" style={{ maxHeight: "400px", overflowY: "auto" }}>
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50 sticky top-0 z-10">
-          <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Task ID
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Task Description
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Assigned To
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Task Start Date
-            </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Frequency
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {getTasksByView(taskView).map((task) => (
-            <tr key={task.id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {task.id}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {task.title}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {task.assignedTo}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {task.taskStartDate}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getFrequencyColor(
-                    task.frequency
-                  )}`}
-                >
-                  {task.frequency.charAt(0).toUpperCase() +
-                    task.frequency.slice(1)}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </>
-)}
+                {/* Desktop: table */}
+                <div className="hidden md:block overflow-x-auto" style={{ maxHeight: "400px", overflowY: "auto" }}>
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0 z-10">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {t('table.taskId')}
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {t('table.description')}
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {t('table.assignedTo')}
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {t('table.taskStartDate')}
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          {t('table.frequency')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {getTasksByView(taskView).map((task) => (
+                        <tr key={task.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {task.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {task.title}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {task.assignedTo}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {task.taskStartDate}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${getFrequencyColor(
+                                task.frequency
+                              )}`}
+                            >
+                              {task.frequency === 'one-time' ? t('assignTask.oneTime') :
+                                task.frequency === 'daily' ? t('assignTask.daily') :
+                                  task.frequency === 'weekly' ? t('assignTask.weekly') :
+                                    task.frequency === 'monthly' ? t('assignTask.monthly') :
+                                      task.frequency}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
 
           </div>
         </div>
@@ -1231,7 +1234,7 @@ export default function AdminDashboard() {
         <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
           <div className="rounded-lg border border-l-4 border-l-indigo-500 shadow-md hover:shadow-lg transition-all bg-white">
             <div className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-tr-lg p-4">
-              <h3 className="text-sm font-medium text-indigo-700">Task Completion Rate</h3>
+              <h3 className="text-sm font-medium text-indigo-700">{t('dashboard.taskCompletionRate')}</h3>
               <BarChart3 className="h-4 w-4 text-indigo-500" />
             </div>
             <div className="p-4">
@@ -1262,21 +1265,21 @@ export default function AdminDashboard() {
               className={`flex-1 py-2 text-center rounded-md transition-colors ${activeTab === "overview" ? "bg-purple-600 text-white" : "text-purple-700 hover:bg-purple-200"
                 }`}
             >
-              Overview
+              {t('dashboard.overview')}
             </button>
             <button
               onClick={() => setActiveTab("mis")}
               className={`flex-1 py-2 text-center rounded-md transition-colors ${activeTab === "mis" ? "bg-purple-600 text-white" : "text-purple-700 hover:bg-purple-200"
                 }`}
             >
-              MIS Report
+              {t('dashboard.misReport')}
             </button>
             <button
               onClick={() => setActiveTab("staff")}
               className={`flex-1 py-2 text-center rounded-md transition-colors ${activeTab === "staff" ? "bg-purple-600 text-white" : "text-purple-700 hover:bg-purple-200"
                 }`}
             >
-              Staff Performance
+              {t('dashboard.staffPerformance')}
             </button>
           </div>
 
@@ -1285,8 +1288,8 @@ export default function AdminDashboard() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <div className="lg:col-span-4 rounded-lg border border-purple-200 shadow-md bg-white">
                   <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
-                    <h3 className="text-purple-700 font-medium">Tasks Overview</h3>
-                    <p className="text-purple-600 text-sm">Task completion rate over time</p>
+                    <h3 className="text-purple-700 font-medium">{t('dashboard.tasksOverview')}</h3>
+                    <p className="text-purple-600 text-sm">{t('dashboard.completionRateTime')}</p>
                   </div>
                   <div className="p-4 pl-2">
                     <TasksOverviewChart />
@@ -1294,8 +1297,8 @@ export default function AdminDashboard() {
                 </div>
                 <div className="lg:col-span-3 rounded-lg border border-purple-200 shadow-md bg-white">
                   <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
-                    <h3 className="text-purple-700 font-medium">Task Status</h3>
-                    <p className="text-purple-600 text-sm">Distribution of tasks by status</p>
+                    <h3 className="text-purple-700 font-medium">{t('dashboard.taskStatus')}</h3>
+                    <p className="text-purple-600 text-sm">{t('dashboard.statusDistribution')}</p>
                   </div>
                   <div className="p-4">
                     <TasksCompletionChart />
@@ -1303,14 +1306,14 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="rounded-lg border border-purple-200 shadow-md bg-white">
-  <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
-    <h3 className="text-lg font-semibold text-purple-800">Staff Task Summary</h3>
-    <p className="text-purple-600 text-sm mt-1">Overview of tasks assigned to each staff member</p>
-  </div>
-  <div className="p-4">
-    <StaffTasksTable />
-  </div>
-</div>
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
+                  <h3 className="text-lg font-semibold text-purple-800">{t('dashboard.staffTaskSummary')}</h3>
+                  <p className="text-purple-600 text-sm mt-1">{t('dashboard.staffTaskDescription')}</p>
+                </div>
+                <div className="p-4">
+                  <StaffTasksTable />
+                </div>
+              </div>
 
             </div>
           )}
@@ -1319,11 +1322,11 @@ export default function AdminDashboard() {
           {activeTab === "mis" && (
             <div className="rounded-lg border border-purple-200 shadow-md bg-white">
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
-                <h3 className="text-purple-700 font-medium">MIS Report</h3>
+                <h3 className="text-purple-700 font-medium">{t('dashboard.misReport')}</h3>
                 <p className="text-purple-600 text-sm">
-                  {dashboardType === "delegation" 
-                    ? "Detailed delegation analytics - all tasks from sheet data"
-                    : "Detailed task analytics and performance metrics"
+                  {dashboardType === "delegation"
+                    ? t('dashboard.delegationAnalyticsDescription')
+                    : t('dashboard.taskAnalyticsDescription')
                   }
                 </p>
               </div>
@@ -1334,7 +1337,7 @@ export default function AdminDashboard() {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
                       <div className="space-y-2 lg:col-span-1">
                         <label htmlFor="start-date" className="flex items-center text-purple-700 text-sm font-medium">
-                          Start Date
+                          {t('assignTask.startDate')}
                         </label>
                         <input
                           id="start-date"
@@ -1346,7 +1349,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="space-y-2 lg:col-span-1">
                         <label htmlFor="end-date" className="flex items-center text-purple-700 text-sm font-medium">
-                          End Date
+                          {t('assignTask.endDate')}
                         </label>
                         <input
                           id="end-date"
@@ -1361,7 +1364,7 @@ export default function AdminDashboard() {
                           onClick={filterTasksByDateRange}
                           className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded transition-colors"
                         >
-                          Apply Filter
+                          {t('dashboard.applyFilter')}
                         </button>
                       </div>
                     </div>
@@ -1370,28 +1373,28 @@ export default function AdminDashboard() {
                   {/* UPDATED: Overall stats with different displays for delegation vs checklist */}
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div className="space-y-2">
-                      <div className="text-sm font-medium text-purple-600">Total Tasks Assigned</div>
+                      <div className="text-sm font-medium text-purple-600">{t('dashboard.totalTasksAssigned')}</div>
                       <div className="text-3xl font-bold text-purple-700">
-                        {dashboardType === "delegation" 
-                          ? departmentData.totalTasks 
+                        {dashboardType === "delegation"
+                          ? departmentData.totalTasks
                           : (dateRange.filtered ? filteredDateStats.totalTasks : departmentData.totalTasks)
                         }
                       </div>
                       {dashboardType === "delegation" ? (
-                        <p className="text-xs text-purple-600">All tasks from delegation sheet</p>
+                        <p className="text-xs text-purple-600">{t('dashboard.delegationSheetDescription')}</p>
                       ) : (
                         dateRange.filtered && (
                           <p className="text-xs text-purple-600">
-                            For period: {formatLocalDate(dateRange.startDate)} - {formatLocalDate(dateRange.endDate)}
+                            {t('dashboard.forPeriod')}: {formatLocalDate(dateRange.startDate)} - {formatLocalDate(dateRange.endDate)}
                           </p>
                         )
                       )}
                     </div>
                     <div className="space-y-2">
-                      <div className="text-sm font-medium text-purple-600">Tasks Completed</div>
+                      <div className="text-sm font-medium text-purple-600">{t('dashboard.tasksCompleted')}</div>
                       <div className="text-3xl font-bold text-purple-700">
-                        {dashboardType === "delegation" 
-                          ? departmentData.completedTasks 
+                        {dashboardType === "delegation"
+                          ? departmentData.completedTasks
                           : (dateRange.filtered ? filteredDateStats.completedTasks : departmentData.completedTasks)
                         }
                       </div>
@@ -1401,17 +1404,17 @@ export default function AdminDashboard() {
                         {dashboardType === "delegation" ? "Tasks Pending" : "Tasks Pending/Overdue"}
                       </div>
                       <div className="text-3xl font-bold text-purple-700">
-                        {dashboardType === "delegation" 
-                          ? departmentData.pendingTasks 
-                          : (dateRange.filtered 
-                              ? `${filteredDateStats.pendingTasks} / ${filteredDateStats.overdueTasks}` 
-                              : `${departmentData.pendingTasks} / ${departmentData.overdueTasks}`
-                            )
+                        {dashboardType === "delegation"
+                          ? departmentData.pendingTasks
+                          : (dateRange.filtered
+                            ? `${filteredDateStats.pendingTasks} / ${filteredDateStats.overdueTasks}`
+                            : `${departmentData.pendingTasks} / ${departmentData.overdueTasks}`
+                          )
                         }
                       </div>
                       <div className="text-xs text-purple-600">
-                        {dashboardType === "delegation" 
-                          ? "All incomplete tasks" 
+                        {dashboardType === "delegation"
+                          ? "All incomplete tasks"
                           : "Pending (all incomplete) / Overdue (past dates only)"
                         }
                       </div>
@@ -1459,8 +1462,8 @@ export default function AdminDashboard() {
                         <h4 className="text-sm font-medium text-purple-700 mb-2">Completion Rate</h4>
                         <div className="flex items-center gap-4">
                           <div className="text-2xl font-bold text-purple-700">
-                            {dashboardType === "delegation" 
-                              ? departmentData.completionRate 
+                            {dashboardType === "delegation"
+                              ? departmentData.completionRate
                               : (dateRange.filtered ? filteredDateStats.completionRate : departmentData.completionRate)
                             }%
                           </div>
@@ -1469,21 +1472,21 @@ export default function AdminDashboard() {
                               <div
                                 className="h-full rounded-full flex items-center justify-end px-3 text-xs font-medium text-white"
                                 style={{
-                                  width: `${dashboardType === "delegation" 
-                                    ? departmentData.completionRate 
+                                  width: `${dashboardType === "delegation"
+                                    ? departmentData.completionRate
                                     : (dateRange.filtered ? filteredDateStats.completionRate : departmentData.completionRate)
-                                  }%`,
-                                  background: `linear-gradient(to right, #10b981 ${(dashboardType === "delegation" 
-                                    ? departmentData.completionRate 
+                                    }%`,
+                                  background: `linear-gradient(to right, #10b981 ${(dashboardType === "delegation"
+                                    ? departmentData.completionRate
                                     : (dateRange.filtered ? filteredDateStats.completionRate : departmentData.completionRate)
-                                  ) * 0.8}%, #f59e0b ${(dashboardType === "delegation" 
-                                    ? departmentData.completionRate 
+                                  ) * 0.8}%, #f59e0b ${(dashboardType === "delegation"
+                                    ? departmentData.completionRate
                                     : (dateRange.filtered ? filteredDateStats.completionRate : departmentData.completionRate)
                                   ) * 0.8}%)`
                                 }}
                               >
-                                {dashboardType === "delegation" 
-                                  ? departmentData.completionRate 
+                                {dashboardType === "delegation"
+                                  ? departmentData.completionRate
                                   : (dateRange.filtered ? filteredDateStats.completionRate : departmentData.completionRate)
                                 }%
                               </div>
@@ -1509,7 +1512,7 @@ export default function AdminDashboard() {
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
                 <h3 className="text-purple-700 font-medium">Staff Performance</h3>
                 <p className="text-purple-600 text-sm">
-                  {dashboardType === "delegation" 
+                  {dashboardType === "delegation"
                     ? "Task completion rates by staff member (all delegation sheet data)"
                     : "Task completion rates by staff member (tasks up to today only)"
                   }
@@ -1532,7 +1535,7 @@ export default function AdminDashboard() {
                               <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 border-b border-green-200">
                                 <h3 className="text-lg font-medium text-green-700">Top Performers</h3>
                                 <p className="text-sm text-green-600">
-                                  {dashboardType === "delegation" 
+                                  {dashboardType === "delegation"
                                     ? "Staff with high task completion rates (all delegation data)"
                                     : "Staff with high task completion rates (tasks up to today only)"
                                   }
@@ -1574,7 +1577,7 @@ export default function AdminDashboard() {
                               <div className="p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 border-b border-yellow-200">
                                 <h3 className="text-lg font-medium text-yellow-700">Average Performers</h3>
                                 <p className="text-sm text-yellow-600">
-                                  {dashboardType === "delegation" 
+                                  {dashboardType === "delegation"
                                     ? "Staff with moderate task completion rates (all delegation data)"
                                     : "Staff with moderate task completion rates (tasks up to today only)"
                                   }
@@ -1616,7 +1619,7 @@ export default function AdminDashboard() {
                               <div className="p-4 bg-gradient-to-r from-red-50 to-red-100 border-b border-red-200">
                                 <h3 className="text-lg font-medium text-red-700">Needs Improvement</h3>
                                 <p className="text-sm text-red-600">
-                                  {dashboardType === "delegation" 
+                                  {dashboardType === "delegation"
                                     ? "Staff with lower task completion rates (all delegation data)"
                                     : "Staff with lower task completion rates (tasks up to today only)"
                                   }
@@ -1659,7 +1662,7 @@ export default function AdminDashboard() {
                                 <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                                   <h3 className="text-lg font-medium text-gray-700">No Tasks Assigned</h3>
                                   <p className="text-sm text-gray-600">
-                                    {dashboardType === "delegation" 
+                                    {dashboardType === "delegation"
                                       ? "Staff with no tasks in delegation sheet"
                                       : "Staff with no tasks assigned for current period"
                                     }
@@ -1681,7 +1684,7 @@ export default function AdminDashboard() {
                                             <div>
                                               <p className="font-medium text-gray-700">{staff.name}</p>
                                               <p className="text-xs text-gray-600">
-                                                {dashboardType === "delegation" 
+                                                {dashboardType === "delegation"
                                                   ? "No tasks in delegation sheet"
                                                   : "No tasks assigned up to today"
                                                 }
@@ -1710,155 +1713,155 @@ export default function AdminDashboard() {
                       </p>
                     </div>
                   )}
-                  
+
                 </div>
-                
+
               </div>
-              
+
             </div>
-            
+
           )}
         </div>
-       {/* Popup Modal */}
-{popupOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl h-[90vh] flex flex-col overflow-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center p-4 border-b">
-        <h2 className="text-xl font-bold text-purple-700">
-          {popupType.charAt(0).toUpperCase() + popupType.slice(1)} Tasks Details
-        </h2>
-        <button onClick={() => setPopupOpen(false)} className="text-gray-500 hover:text-gray-700">
-          <X className="h-6 w-6" />
-        </button>
-      </div>
+        {/* Popup Modal */}
+        {popupOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl h-[90vh] flex flex-col overflow-auto">
+              {/* Header */}
+              <div className="flex justify-between items-center p-4 border-b">
+                <h2 className="text-xl font-bold text-purple-700">
+                  {popupType.charAt(0).toUpperCase() + popupType.slice(1)} Tasks Details
+                </h2>
+                <button onClick={() => setPopupOpen(false)} className="text-gray-500 hover:text-gray-700">
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
 
-      {/* FILTERS */}
-      <div className="p-4 border-b bg-gray-50 flex flex-wrap gap-4 items-center">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-5" />
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            value={popupFilters.search}
-            onChange={e => handlePopupFilterChange("search", e.target.value)}
-            className="pl-10 pr-4 py-2 border border-purple-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-        </div>
-        {/* Department Filter */}
-        <select
-          value={popupFilters.department}
-          onChange={e => handlePopupFilterChange("department", e.target.value)}
-          className="border border-purple-200 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        >
-          <option value="all">All Departments</option>
-          {Array.from(new Set(popupData.map(task => task.department).filter(Boolean))).map((dept, i) => (
-            <option key={i} value={dept}>{dept}</option>
-          ))}
-        </select>
-        {/* Name Filter */}
-        <select
-          value={popupFilters.name}
-          onChange={e => handlePopupFilterChange("name", e.target.value)}
-          className="border border-purple-200 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-        >
-          <option value="all">All Names</option>
-          {Array.from(new Set(popupData.map(task => task.assignedTo).filter(Boolean))).map((name, i) => (
-            <option key={i} value={name}>{name}</option>
-          ))}
-        </select>
-        {/* Clear Filters */}
-        <button
-          onClick={() => setPopupFilters({ search: '', department: 'all', givenBy: 'all', name: 'all' })}
-          className="px-4 py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors font-medium flex items-center gap-2"
-        >
-          <X size={16} /> Clear Filters
-        </button>
-        <span className="font-medium text-blue-800 ml-auto">
-          Total Tasks {getFilteredPopupData().length}
-        </span>
-      </div>
-
-      {/* --- TABLE (Desktop), CARD(Mobile) --- */}
-      <div className="flex-1 overflow-auto">
-        {/* Table: Desktop */}
-        <div className="hidden md:block">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Task ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {getFilteredPopupData().map(task => (
-                <tr key={task.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm text-gray-900">{task.id}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{task.department}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{task.assignedTo}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{task.title}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{task.taskStartDate}</td>
-                  <td className="px-6 py-4 text-sm">
-                    <span className={
-                      task.status === "completed" ? "bg-green-500 text-white px-2 py-1 rounded-full" :
-                      task.status === "pending" ? "bg-amber-500 text-white px-2 py-1 rounded-full" :
-                      "bg-red-500 text-white px-2 py-1 rounded-full"
-                    }>
-                      {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {/* Cards: Mobile */}
-        <div className="md:hidden space-y-4 p-4">
-          {getFilteredPopupData().map(task => (
-            <div key={task.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-3">
-              <div className="flex justify-between">
-                <span className="text-xs font-medium text-gray-500">Task ID</span>
-                <span className="text-sm font-semibold text-gray-900">{task.id}</span>
-              </div>
-              <div>
-                <span className="text-xs font-medium text-gray-500">Description</span>
-                <p className="text-sm text-gray-900">{task.title}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <span className="text-xs font-medium text-gray-500">Department</span>
-                  <p className="text-sm text-gray-900">{task.department}</p>
+              {/* FILTERS */}
+              <div className="p-4 border-b bg-gray-50 flex flex-wrap gap-4 items-center">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 size-5" />
+                  <input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={popupFilters.search}
+                    onChange={e => handlePopupFilterChange("search", e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-purple-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
                 </div>
-                <div>
-                  <span className="text-xs font-medium text-gray-500">Assigned To</span>
-                  <p className="text-sm text-gray-900">{task.assignedTo}</p>
-                </div>
-              </div>
-              <div>
-                <span className="text-xs font-medium text-gray-500">Start Date</span>
-                <p className="text-sm text-gray-900">{task.taskStartDate}</p>
-              </div>
-              <div>
-                <span className={
-                  task.status === "completed" ? "bg-green-500 text-white px-2 py-1 rounded-full" :
-                  task.status === "pending" ? "bg-amber-500 text-white px-2 py-1 rounded-full" :
-                  "bg-red-500 text-white px-2 py-1 rounded-full"
-                }>
-                  {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                {/* Department Filter */}
+                <select
+                  value={popupFilters.department}
+                  onChange={e => handlePopupFilterChange("department", e.target.value)}
+                  className="border border-purple-200 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="all">All Departments</option>
+                  {Array.from(new Set(popupData.map(task => task.department).filter(Boolean))).map((dept, i) => (
+                    <option key={i} value={dept}>{dept}</option>
+                  ))}
+                </select>
+                {/* Name Filter */}
+                <select
+                  value={popupFilters.name}
+                  onChange={e => handlePopupFilterChange("name", e.target.value)}
+                  className="border border-purple-200 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="all">All Names</option>
+                  {Array.from(new Set(popupData.map(task => task.assignedTo).filter(Boolean))).map((name, i) => (
+                    <option key={i} value={name}>{name}</option>
+                  ))}
+                </select>
+                {/* Clear Filters */}
+                <button
+                  onClick={() => setPopupFilters({ search: '', department: 'all', givenBy: 'all', name: 'all' })}
+                  className="px-4 py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors font-medium flex items-center gap-2"
+                >
+                  <X size={16} /> Clear Filters
+                </button>
+                <span className="font-medium text-blue-800 ml-auto">
+                  Total Tasks {getFilteredPopupData().length}
                 </span>
               </div>
+
+              {/* --- TABLE (Desktop), CARD(Mobile) --- */}
+              <div className="flex-1 overflow-auto">
+                {/* Table: Desktop */}
+                <div className="hidden md:block">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Task ID</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {getFilteredPopupData().map(task => (
+                        <tr key={task.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-sm text-gray-900">{task.id}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{task.department}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{task.assignedTo}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{task.title}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{task.taskStartDate}</td>
+                          <td className="px-6 py-4 text-sm">
+                            <span className={
+                              task.status === "completed" ? "bg-green-500 text-white px-2 py-1 rounded-full" :
+                                task.status === "pending" ? "bg-amber-500 text-white px-2 py-1 rounded-full" :
+                                  "bg-red-500 text-white px-2 py-1 rounded-full"
+                            }>
+                              {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Cards: Mobile */}
+                <div className="md:hidden space-y-4 p-4">
+                  {getFilteredPopupData().map(task => (
+                    <div key={task.id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-xs font-medium text-gray-500">Task ID</span>
+                        <span className="text-sm font-semibold text-gray-900">{task.id}</span>
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-gray-500">Description</span>
+                        <p className="text-sm text-gray-900">{task.title}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <span className="text-xs font-medium text-gray-500">Department</span>
+                          <p className="text-sm text-gray-900">{task.department}</p>
+                        </div>
+                        <div>
+                          <span className="text-xs font-medium text-gray-500">Assigned To</span>
+                          <p className="text-sm text-gray-900">{task.assignedTo}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-gray-500">Start Date</span>
+                        <p className="text-sm text-gray-900">{task.taskStartDate}</p>
+                      </div>
+                      <div>
+                        <span className={
+                          task.status === "completed" ? "bg-green-500 text-white px-2 py-1 rounded-full" :
+                            task.status === "pending" ? "bg-amber-500 text-white px-2 py-1 rounded-full" :
+                              "bg-red-500 text-white px-2 py-1 rounded-full"
+                        }>
+                          {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+          </div>
+        )}
 
       </div>
     </AdminLayout>

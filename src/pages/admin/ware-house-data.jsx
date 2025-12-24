@@ -4,28 +4,30 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { CheckCircle2, Upload, X, Search, History, ArrowLeft } from "lucide-react"
 import AdminLayout from "../../components/layout/AdminLayout"
+import { useTranslation } from "../../contexts/TranslationContext"
 
 // Configuration object - Move all configurations here
 const CONFIG = {
   // Google Apps Script URL
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycby0-aE9uNuU3yBJ9SAHvAfXycYt5vPyvAtlAauVy-xlH9rc4fPCGSQM6pvsqZ9QvSvbyg/exec",
-  
+
   // Google Drive folder ID for file uploads
   DRIVE_FOLDER_ID: "1P6jC4X8eMoyPUOUCFp8G30I83aAeEIy9",
-  
+
   // Sheet name to work with
   SHEET_NAME: "REFRASYNTH",
-  
+
   // Page configuration
   PAGE_CONFIG: {
-    title: "REFRASYNTH Tasks",
-    historyTitle: "REFRASYNTH Task History",
-    description: "Showing today, tomorrow's tasks and past due tasks",
-    historyDescription: "Read-only view of completed tasks with submission history"
+    title: "nav.warehouse",
+    historyTitle: "delegation.historyTitle",
+    description: "assignTask.checklistDescription",
+    historyDescription: "assignTask.checklistHistoryDescription"
   }
 }
 
-function AccountDataPage() {
+function WarehouseDataPage() {
+  const { t } = useTranslation()
   const [accountData, setAccountData] = useState([])
   const [selectedItems, setSelectedItems] = useState(new Set()) // Changed to Set for better performance
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -119,10 +121,10 @@ function AccountDataPage() {
   const filteredAccountData = useMemo(() => {
     const filtered = searchTerm
       ? accountData.filter((account) =>
-          Object.values(account).some(
-            (value) => value && value.toString().toLowerCase().includes(searchTerm.toLowerCase()),
-          ),
-        )
+        Object.values(account).some(
+          (value) => value && value.toString().toLowerCase().includes(searchTerm.toLowerCase()),
+        ),
+      )
       : accountData
 
     return filtered.sort(sortDateWise)
@@ -133,8 +135,8 @@ function AccountDataPage() {
       .filter((item) => {
         const matchesSearch = searchTerm
           ? Object.values(item).some(
-              (value) => value && value.toString().toLowerCase().includes(searchTerm.toLowerCase()),
-            )
+            (value) => value && value.toString().toLowerCase().includes(searchTerm.toLowerCase()),
+          )
           : true
 
         const matchesMember = selectedMembers.length > 0 ? selectedMembers.includes(item["col4"]) : true
@@ -175,12 +177,12 @@ function AccountDataPage() {
     const memberStats =
       selectedMembers.length > 0
         ? selectedMembers.reduce((stats, member) => {
-            const memberTasks = historyData.filter((task) => task["col4"] === member).length
-            return {
-              ...stats,
-              [member]: memberTasks,
-            }
-          }, {})
+          const memberTasks = historyData.filter((task) => task["col4"] === member).length
+          return {
+            ...stats,
+            [member]: memberTasks,
+          }
+        }, {})
         : {}
     const filteredTotal = filteredHistoryData.length
 
@@ -371,10 +373,10 @@ function AccountDataPage() {
   // Fixed checkbox handlers with better state management
   const handleSelectItem = useCallback((id, isChecked) => {
     console.log(`Checkbox action: ${id} -> ${isChecked}`)
-   
+
     setSelectedItems((prev) => {
       const newSelected = new Set(prev)
-     
+
       if (isChecked) {
         newSelected.add(id)
       } else {
@@ -391,7 +393,7 @@ function AccountDataPage() {
           return newRemarksData
         })
       }
-     
+
       console.log(`Updated selection: ${Array.from(newSelected)}`)
       return newSelected
     })
@@ -424,7 +426,7 @@ function AccountDataPage() {
   const handleImageUpload = async (id, e) => {
     const file = e.target.files[0]
     if (!file) return
-   
+
     console.log(`Image upload for: ${id}`)
     setAccountData((prev) => prev.map((item) => (item._id === id ? { ...item, image: file } : item)))
   }
@@ -445,9 +447,9 @@ function AccountDataPage() {
 
   const handleSubmit = async () => {
     const selectedItemsArray = Array.from(selectedItems)
-   
+
     if (selectedItemsArray.length === 0) {
-      alert("Please select at least one item to submit")
+      alert(t('messages.selectAtLeastOne'))
       return
     }
 
@@ -458,7 +460,7 @@ function AccountDataPage() {
     })
 
     if (missingRemarks.length > 0) {
-      alert(`Please provide remarks for items marked as "No". ${missingRemarks.length} item(s) are missing remarks.`)
+      alert(t('delegation.remarksRequired'))
       return
     }
 
@@ -469,9 +471,7 @@ function AccountDataPage() {
     })
 
     if (missingRequiredImages.length > 0) {
-      alert(
-        `Please upload images for all required attachments. ${missingRequiredImages.length} item(s) are missing required images.`,
-      )
+      alert(t('messages.uploadRequiredImages'))
       return
     }
 
@@ -549,9 +549,7 @@ function AccountDataPage() {
           prev.map((item) => (selectedItems.has(item._id) ? { ...item, status: "completed", image: null } : item)),
         )
 
-        setSuccessMessage(
-          `Successfully processed ${selectedItemsArray.length} task records! Columns K, M, N, and O updated.`,
-        )
+        setSuccessMessage(t('messages.updateSuccess'))
         setSelectedItems(new Set())
         setAdditionalData({})
         setRemarksData({})
@@ -578,7 +576,7 @@ function AccountDataPage() {
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <h1 className="text-2xl font-bold tracking-tight text-purple-700">
-            {showHistory ? CONFIG.PAGE_CONFIG.historyTitle : CONFIG.PAGE_CONFIG.title}
+            {showHistory ? t('nav.history') + " " + t('nav.warehouse') : t('nav.warehouse')}
           </h1>
 
           <div className="flex space-x-4">
@@ -586,7 +584,7 @@ function AccountDataPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
-                placeholder={showHistory ? "Search history..." : "Search tasks..."}
+                placeholder={showHistory ? t('form.searchPlaceholder') : t('form.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-purple-200 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -600,12 +598,12 @@ function AccountDataPage() {
               {showHistory ? (
                 <div className="flex items-center">
                   <ArrowLeft className="h-4 w-4 mr-1" />
-                  <span>Back to Tasks</span>
+                  <span>{t('delegation.backToTasks')}</span>
                 </div>
               ) : (
                 <div className="flex items-center">
                   <History className="h-4 w-4 mr-1" />
-                  <span>View History</span>
+                  <span>{t('delegation.viewHistory')}</span>
                 </div>
               )}
             </button>
@@ -616,7 +614,7 @@ function AccountDataPage() {
                 disabled={selectedItemsCount === 0 || isSubmitting}
                 className="rounded-md bg-gradient-to-r from-purple-600 to-pink-600 py-2 px-4 text-white hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? "Processing..." : `Submit Selected (${selectedItemsCount})`}
+                {isSubmitting ? t('common.submitting') : `${t('common.submit')} (${selectedItemsCount})`}
               </button>
             )}
           </div>
@@ -636,25 +634,22 @@ function AccountDataPage() {
 
         <div className="rounded-lg border border-purple-200 shadow-md bg-white overflow-hidden">
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
-            <h2 className="text-purple-700 font-medium">{showHistory ? `Completed ${CONFIG.SHEET_NAME} Tasks` : `Pending ${CONFIG.SHEET_NAME} Tasks`}</h2>
+            <h2 className="text-purple-700 font-medium">{showHistory ? t('assignTask.checklistHistory') : t('assignTask.checklistTasks')}</h2>
             <p className="text-purple-600 text-sm">
               {showHistory
-                ? `${CONFIG.PAGE_CONFIG.historyDescription} for ${userRole === "admin" ? "all" : "your"} tasks`
-                : CONFIG.PAGE_CONFIG.description}
+                ? t('assignTask.checklistHistoryDescription')
+                : t('assignTask.checklistDescription')}
             </p>
           </div>
 
           {loading ? (
             <div className="text-center py-10">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-              <p className="text-purple-600">Loading task data...</p>
+              <p className="text-purple-600">{t('calendar.loading')}</p>
             </div>
           ) : error ? (
             <div className="bg-red-50 p-4 rounded-md text-red-800 text-center">
-              {error}{" "}
-              <button className="underline ml-2" onClick={() => window.location.reload()}>
-                Try again
-              </button>
+              {error} <button className="underline ml-2" onClick={() => window.location.reload()}>{t('common.retry')}</button>
             </div>
           ) : showHistory ? (
             <>
@@ -664,7 +659,7 @@ function AccountDataPage() {
                   {getFilteredMembersList().length > 0 && (
                     <div className="flex flex-col">
                       <div className="mb-2 flex items-center">
-                        <span className="text-sm font-medium text-purple-700">Filter by Member:</span>
+                        <span className="text-sm font-medium text-purple-700">{t('common.filterMember')}</span>
                       </div>
                       <div className="flex flex-wrap gap-3 max-h-32 overflow-y-auto p-2 border border-gray-200 rounded-md bg-white">
                         {getFilteredMembersList().map((member, idx) => (
@@ -687,12 +682,12 @@ function AccountDataPage() {
 
                   <div className="flex flex-col">
                     <div className="mb-2 flex items-center">
-                      <span className="text-sm font-medium text-purple-700">Filter by Date Range:</span>
+                      <span className="text-sm font-medium text-purple-700">{t('common.filterDate')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center">
                         <label htmlFor="start-date" className="text-sm text-gray-700 mr-1">
-                          From
+                          {t('common.from')}
                         </label>
                         <input
                           id="start-date"
@@ -704,7 +699,7 @@ function AccountDataPage() {
                       </div>
                       <div className="flex items-center">
                         <label htmlFor="end-date" className="text-sm text-gray-700 mr-1">
-                          To
+                          {t('common.to')}
                         </label>
                         <input
                           id="end-date"
@@ -722,7 +717,7 @@ function AccountDataPage() {
                       onClick={resetFilters}
                       className="px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 text-sm"
                     >
-                      Clear All Filters
+                      {t('common.clearFilters')}
                     </button>
                   )}
                 </div>
@@ -731,16 +726,16 @@ function AccountDataPage() {
               {/* Task Statistics */}
               <div className="p-4 border-b border-purple-100 bg-blue-50">
                 <div className="flex flex-col">
-                  <h3 className="text-sm font-medium text-blue-700 mb-2">Task Completion Statistics:</h3>
+                  <h3 className="text-sm font-medium text-blue-700 mb-2">{t('common.statsTitle')}</h3>
                   <div className="flex flex-wrap gap-4">
                     <div className="px-3 py-2 bg-white rounded-md shadow-sm">
-                      <span className="text-xs text-gray-500">Total Completed</span>
+                      <span className="text-xs text-gray-500">{t('common.totalCompleted')}</span>
                       <div className="text-lg font-semibold text-blue-600">{getTaskStatistics().totalCompleted}</div>
                     </div>
 
                     {(selectedMembers.length > 0 || startDate || endDate || searchTerm) && (
                       <div className="px-3 py-2 bg-white rounded-md shadow-sm">
-                        <span className="text-xs text-gray-500">Filtered Results</span>
+                        <span className="text-xs text-gray-500">{t('common.filteredResults')}</span>
                         <div className="text-lg font-semibold text-blue-600">{getTaskStatistics().filteredTotal}</div>
                       </div>
                     )}
@@ -762,19 +757,19 @@ function AccountDataPage() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Firm</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Given By</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Description</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50">Task Start Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Freq</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enable Reminders</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Require Attachment</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">Actual Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-purple-50">Remarks</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attachment</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.taskId')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.firm')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.givenBy')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.doerName')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.taskDescription')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50">{t('assignTask.startDate')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.frequency')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.enableReminders')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.requireAttachment')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50">{t('common.actualDate')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">{t('assignTask.status')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-purple-50">{t('assignTask.remarks')}</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.attachment')}</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -841,10 +836,10 @@ function AccountDataPage() {
                                   alt="Attachment"
                                   className="h-8 w-8 object-cover rounded-md mr-2"
                                 />
-                                View
+                                {t('common.view')}
                               </a>
                             ) : (
-                              <span className="text-gray-400">No attachment</span>
+                              <span className="text-gray-400">{t('common.noAttachment')}</span>
                             )}
                           </td>
                         </tr>
@@ -853,8 +848,8 @@ function AccountDataPage() {
                       <tr>
                         <td colSpan={13} className="px-6 py-4 text-center text-gray-500">
                           {searchTerm || selectedMembers.length > 0 || startDate || endDate
-                            ? "No historical records matching your filters"
-                            : "No completed records found"}
+                            ? t('delegation.noHistoryFound')
+                            : t('delegation.noCompletedTasks')}
                         </td>
                       </tr>
                     )}
@@ -876,18 +871,18 @@ function AccountDataPage() {
                         onChange={handleSelectAllItems}
                       />
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Firm</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Given By</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Description</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50">Task Start Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Freq</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enable Reminders</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Require Attachment</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Upload Image</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.taskId')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.firm')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.givenBy')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.doerName')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.taskDescription')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50">{t('assignTask.startDate')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.frequency')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.enableReminders')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.requireAttachment')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.status')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.remarks')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('assignTask.uploadImage')}</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -952,15 +947,15 @@ function AccountDataPage() {
                               }}
                               className="border border-gray-300 rounded-md px-2 py-1 w-full disabled:bg-gray-100 disabled:cursor-not-allowed"
                             >
-                              <option value="">Select...</option>
-                              <option value="Yes">Yes</option>
-                              <option value="No">No</option>
+                              <option value="">{t('form.selectOption')}</option>
+                              <option value="Yes">{t('common.yes')}</option>
+                              <option value="No">{t('common.no')}</option>
                             </select>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap bg-orange-50">
                             <input
                               type="text"
-                              placeholder="Enter remarks"
+                              placeholder={t('assignTask.remarks')}
                               disabled={!isSelected || !additionalData[account._id]}
                               value={remarksData[account._id] || ""}
                               onChange={(e) => setRemarksData((prev) => ({ ...prev, [account._id]: e.target.value }))}
@@ -979,16 +974,16 @@ function AccountDataPage() {
                                 />
                                 <div className="flex flex-col">
                                   <span className="text-xs text-gray-500">
-                                    {account.image instanceof File ? account.image.name : "Uploaded Receipt"}
+                                    {account.image instanceof File ? account.image.name : t('delegation.uploadedReceipt')}
                                   </span>
                                   {account.image instanceof File ? (
-                                    <span className="text-xs text-green-600">Ready to upload</span>
+                                    <span className="text-xs text-green-600">{t('delegation.readyToUpload')}</span>
                                   ) : (
                                     <button
                                       className="text-xs text-purple-600 hover:text-purple-800"
                                       onClick={() => window.open(account.image, "_blank")}
                                     >
-                                      View Full Image
+                                      {t('delegation.viewFullImage')}
                                     </button>
                                   )}
                                 </div>
@@ -999,7 +994,7 @@ function AccountDataPage() {
                               >
                                 <Upload className="h-4 w-4 mr-1" />
                                 <span className="text-xs">
-                                  {account["col9"]?.toUpperCase() === "YES" ? "Required Upload" : "Upload Receipt Image"}
+                                  {account["col9"]?.toUpperCase() === "YES" ? t('delegation.requiredUpload') : t('delegation.uploadReceiptImage')}
                                   {account["col9"]?.toUpperCase() === "YES" && (
                                     <span className="text-red-500 ml-1">*</span>
                                   )}
@@ -1021,8 +1016,8 @@ function AccountDataPage() {
                     <tr>
                       <td colSpan={14} className="px-6 py-4 text-center text-gray-500">
                         {searchTerm
-                          ? "No tasks matching your search"
-                          : "No pending tasks found for today, tomorrow, or past due dates"}
+                          ? t('delegation.noTasksFound')
+                          : t('delegation.noPendingTasks')}
                       </td>
                     </tr>
                   )}
@@ -1036,4 +1031,4 @@ function AccountDataPage() {
   )
 }
 
-export default AccountDataPage
+export default WarehouseDataPage
