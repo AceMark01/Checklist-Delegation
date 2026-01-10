@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { BellRing, FileCheck, Calendar } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { BellRing, FileCheck, Calendar, Mic, MicOff } from "lucide-react";
 import AdminLayout from "../../components/layout/AdminLayout";
 import { useTranslation } from "../../contexts/TranslationContext";
 
@@ -144,12 +144,14 @@ const addYears = (date, years) => {
 };
 
 export default function AssignTask() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [date, setSelectedDate] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedTasks, setGeneratedTasks] = useState([]);
   const [showCalendar, setShowCalendar] = useState(false);
   const [accordionOpen, setAccordionOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
 
   // Add new state variables for dropdown options
   const [departmentOptions, setDepartmentOptions] = useState([]);
@@ -189,6 +191,79 @@ export default function AssignTask() {
 
   const handleSwitchChange = (name, e) => {
     setFormData((prev) => ({ ...prev, [name]: e.target.checked }));
+  };
+
+  const toggleListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser. Please use Chrome, Safari or Edge.");
+      return;
+    }
+
+    if (!window.isSecureContext && window.location.hostname !== "localhost") {
+      alert("Voice Assistant requires a secure connection (HTTPS) to work on mobile. Please access the site via HTTPS.");
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        if (finalTranscript) {
+          setFormData((prev) => ({
+            ...prev,
+            description: prev.description ? `${prev.description} ${finalTranscript}` : finalTranscript
+          }));
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        if (event.error === 'not-allowed') {
+          alert("Microphone access denied. Please allow microphone permissions in your browser settings.");
+        } else if (event.error === 'network') {
+          alert("Network error occurred during speech recognition.");
+        } else if (event.error !== 'no-speech') {
+          alert(`Speech recognition error: ${event.error}`);
+        }
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (error) {
+      console.error("Speech recognition startup error:", error);
+      alert("Could not start speech recognition. Please try again.");
+      setIsListening(false);
+    }
   };
 
   // Function to fetch options from master sheet
@@ -866,15 +941,32 @@ export default function AssignTask() {
                 >
                   {t('assignTask.taskDescription')}
                 </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={3}
-                  placeholder={t('assignTask.descriptionPlaceholder')}
-                  className="w-full rounded-md border border-purple-200 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                />
+                <div className="relative">
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder={t('assignTask.descriptionPlaceholder')}
+                    className="w-full rounded-md border border-purple-200 px-3 py-2 pr-10 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleListening}
+                    className={`absolute bottom-2 right-2 p-1.5 rounded-full transition-colors ${isListening
+                      ? "bg-red-100 text-red-600 animate-pulse"
+                      : "bg-purple-100 text-purple-600 hover:bg-purple-200"
+                      }`}
+                    title={isListening ? "Stop listening" : "Start voice input"}
+                  >
+                    {isListening ? (
+                      <MicOff className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Date and Frequency */}
